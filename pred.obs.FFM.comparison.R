@@ -160,11 +160,19 @@ for (i in 1:length(gage$Gage)){
   sub.obs <- obs.results.ffm.all[ind.start.obs:ind.end.obs,]
   sub.pred <- pred.results.ffm.all[ind.start.pred:ind.end.pred,]
   ffm.names <- names(sub.obs)
-  #color points based on >2015, >=2015
-  pre.2015.lab <- paste0(start.overall, "-2014")
-  post.2014.lab <- paste0("2015-", end.overall)
-  ind.2014 <- grep("2014", sub.obs$Year)
-  label.years <- c(rep(pre.2015.lab, ind.2014), rep(post.2014.lab, (length(sub.obs$Year)-ind.2014)))
+  #color points based on ><2015, >=2015
+    #if there's no point before 2015, then all should be post timeframe
+  if(start.overall>2014){
+    pre.2015.lab <- paste0("pre-", start.overall)
+    post.2014.lab <- paste0(start.overall, "-", end.overall)
+    #all years are in the post timeframe
+    label.years <- rep(post.2014.lab, length(sub.obs$Year))
+  }else{
+    pre.2015.lab <- paste0(start.overall, "-2014")
+    post.2014.lab <- paste0("2015-", end.overall)
+    ind.2014 <- grep("2014", sub.obs$Year)
+    label.years <- c(rep(pre.2015.lab, ind.2014), rep(post.2014.lab, (length(sub.obs$Year)-ind.2014)))
+  }
   
   #loop to plot predicted vs obs FFMs
   for(l in 2:(length(ffm.names)-1)){
