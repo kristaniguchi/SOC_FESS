@@ -17,6 +17,8 @@ gage.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecol
 model.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/"
 pred.data.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/"
 setwd(pred.data.dir)
+plot.output.dir.pred <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/daily/FFMs/"
+plot.output.dir.obs <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200326_Gauge_Data/daily/FFMs/"
 
 #Gage info
 gage <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY15-19_Calibration_Assessment/WY15-19_Statistical_Summary_v22M_KTQ.csv", skip=5, header=TRUE)
@@ -72,8 +74,10 @@ for (i in 1:length(gage$Gage)){
   ################
   
   #calc FFMs and alteration for predicted data.pred
+  #directory to save ffm outputs
+  output.dir <- paste0(plot.output.dir.pred, subbasin)
   #Run data.predframe through FFC online with my own gage data.pred or model data.pred
-  results.pred <- ffcAPIClient::evaluate_alteration(timeseries_df = data.pred, comid = COMID, token = mytoken)
+  results.pred <- ffcAPIClient::evaluate_alteration(timeseries_df = data.pred, comid = COMID, token = mytoken, plot_output_folder = output.dir)
   #reference percentiles
   ref.percentiles <- results.pred$predicted_percentiles
   ref.percentiles.wyt <- results.pred$predicted_wyt_percentiles
@@ -83,6 +87,13 @@ for (i in 1:length(gage$Gage)){
   pred.results.ffm.all <- results.pred$ffc_results
     pred.results.ffm.all$type <- "pred"
   pred.drh.data <- results.pred$drh_data.pred
+  #write outputs to dir
+  write.csv(pred.alteration.all, file=paste0(output.dir,"/pred.alteration.all.csv"), row.names=FALSE)
+  write.csv(pred.percentiles.all, file=paste0(output.dir,"/pred.percentiles.all.csv"), row.names=FALSE)
+  write.csv(pred.results.ffm.all, file=paste0(output.dir,"/pred.results.ffm.all.csv"), row.names=FALSE)
+  write.csv(pred.drh.data, file=paste0(output.dir,"/pred.drh.data.csv"), row.names=FALSE)
+  
+  
   ################################################
   ####OBSERVED GAGE DATA######
 
@@ -108,8 +119,10 @@ for (i in 1:length(gage$Gage)){
   
   for (k in 1:length(unique.dates2)){
     sub.day2 <- obs[obs$date == unique.dates2[k],]
-    flow.obs[k] <- mean(sub.day2$obs_flow)
+    flow.obs[k] <- mean(sub.day2$obs_flow, na.rm=TRUE)
   }
+  #if NaN, replace with NA
+  flow.obs<- as.numeric(sub("NaN", "NA", flow.obs))
   #create new data frame with date and mean daily flow to go into FFC
   data.obs <- data.frame(cbind(unique.dates2, flow.obs))
   names(data.obs) <- c("date", "flow")
@@ -118,13 +131,20 @@ for (i in 1:length(gage$Gage)){
   write.table(data.obs, fname2, row.names = FALSE, sep = ",")
   ################
   #calc FFMs and alteration for observed data
+  output.dir.obs <- paste0(plot.output.dir.obs, subbasin)
   #Run dataframe through FFC online with my own gage data or model data
-  results.obs <- ffcAPIClient::evaluate_alteration(timeseries_df = data.obs, comid = COMID, token = mytoken)
+  results.obs <- ffcAPIClient::evaluate_alteration(timeseries_df = data.obs, comid = COMID, token = mytoken, plot_output_folder = output.dir.obs)
   obs.alteration.all <- results.obs$alteration
   obs.percentiles.all <- results.obs$ffc_percentiles
   obs.results.ffm.all <- results.obs$ffc_results
     obs.results.ffm.all$type <- "obs"
   obs.drh.data <- results.obs$drh_data
+  #write outputs to dir
+  write.csv(obs.alteration.all, file=paste0(output.dir.obs,"/obs.alteration.all.csv"), row.names=FALSE)
+  write.csv(obs.percentiles.all, file=paste0(output.dir.obs,"/obs.percentiles.all.csv"), row.names=FALSE)
+  write.csv(obs.results.ffm.all, file=paste0(output.dir.obs,"/obs.results.ffm.all.csv"), row.names=FALSE)
+  write.csv(obs.drh.data, file=paste0(output.dir.obs,"/obs.drh.data.csv"), row.names=FALSE)
+  
   ################################################
   #####create plots pred vs. obs FFMs#####
   
@@ -134,18 +154,21 @@ for (i in 1:length(gage$Gage)){
   end.date.obs <- as.character(data.obs$date[length(data.obs$date)])
   obs.por <- paste0("Observed Gage POR: ", start.date.obs, " to ", end.date.obs)
   #full WY start and end
-  start.wy.obs0 <- na.omit(obs.results.ffm.all$Year[obs.results.ffm.all$DS_Dur_WS>1])
+  start.wy.obs0 <- na.omit(obs.results.ffm.all$Year[obs.results.ffm.all$Wet_Tim>1])
   start.wy.obs <- start.wy.obs0[1]
   end.wy.obs <- start.wy.obs0[length(start.wy.obs0)]
+  obs.wy.por <- paste0("WY ", start.wy.obs, " to ", end.wy.obs)
+  
   
   #predicted LSPC POR
   start.date.pred <- as.character(data.pred$date[1])
   end.date.pred <- as.character(data.pred$date[length(data.pred$date)])
   pred.por <- paste0("LSPC POR: ", start.date.pred, " to ", end.date.pred)
   #full WY start and end, first year that isn't NA is start WY, last year that isn't NA is end WY
-  start.wy.pred0 <- na.omit(pred.results.ffm.all$Year[pred.results.ffm.all$DS_Dur_WS>1])
+  start.wy.pred0 <- na.omit(pred.results.ffm.all$Year[pred.results.ffm.all$Wet_Tim>1])
   start.wy.pred <- start.wy.pred0[1]
   end.wy.pred <- start.wy.pred0[length(start.wy.pred0)]
+  pred.wy.por <- paste0("WY ", start.wy.pred, " to ", end.wy.pred)
   
   #subset to overlapping years
   start.overall <- max(as.numeric(c(start.wy.obs, start.wy.pred)))
@@ -174,7 +197,7 @@ for (i in 1:length(gage$Gage)){
     label.years <- c(rep(pre.2015.lab, ind.2014), rep(post.2014.lab, (length(sub.obs$Year)-ind.2014)))
   }
   
-  #loop to plot predicted vs obs FFMs
+  #loop to plot predicted vs obs for each ffm
   for(l in 2:(length(ffm.names)-1)){
     #get flow metric and labels/title for plots
     ffm <- ffm.names[l]
@@ -186,17 +209,53 @@ for (i in 1:length(gage$Gage)){
       x.name <- paste0("Observed", ffm.labels$title_ffm[index.ffm])
       y.name <- paste0("Predicted", ffm.labels$title_ffm[index.ffm])
       title <- ffm.labels$title_name[index.ffm]
-      #plot
-      plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], timeframe = label.years)) + 
-        geom_point(mapping = aes(x = x, y = y, col=timeframe, size=.5)) +
-        labs(x = x.name, y= y.name, subtitle = gage.name, title = title) + 
-        scale_size(guide=FALSE) + theme(legend.title = element_blank(), legend.position = "bottom") +
-        geom_abline()
-      # print plots to screen
+      #if more than 2 points set xlim, ylim to be equal and plot
+      if(length(sub.obs[,l])>1){
+        #set xlim and ylim to be equal axes
+        limits <- c(min(sub.obs[,l],sub.pred[,l], na.rm=TRUE), max(sub.obs[,l],sub.pred[,l], na.rm=TRUE))
+        #plot
+        plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], timeframe = label.years)) + 
+          geom_point(mapping = aes(x = x, y = y, col=timeframe, size=.5)) +
+          labs(x = x.name, y= y.name, subtitle = gage.name, title = title) + 
+          xlim(limits) + ylim(limits) +
+          scale_size(guide=FALSE) + 
+          theme(legend.title = element_blank(), legend.position = "bottom", legend.text= element_text(size=10)) +
+          guides(colour=guide_legend(override.aes = list(size = 4))) + geom_abline()
+        #else only one point, just plot the point
+      }else{
+        #plot
+        plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], timeframe = label.years)) + 
+          geom_point(mapping = aes(x = x, y = y, col=timeframe, size=.5)) +
+          labs(x = x.name, y= y.name, subtitle = gage.name, title = title) + 
+          scale_size(guide=FALSE) + theme(legend.title = element_blank(), legend.position = "bottom", legend.text= element_text(size=10)) +
+          guides(colour=guide_legend(override.aes = list(size = 4))) + geom_abline()
+      }
+      #print plots to screen
       print(plot)
-  
     }
   }
+  ############################
+  ###Boxplot comparisons of entire POR LSPC (add colored points), Gage, Reference
+  #create combined boxplots for each component
+  unique.components <- as.character(unique(ffm.labels$title_component))
+  for(m in 1:length(unique.components)){
+    #subset percentiles based on component m
+    ind.comp.m <- grep(unique.components[m], ffm.labels$title_component)
+    ffm.names.m <- ffm.labels[ind.comp.m,]
+    sub.pred.comp <- obs.percentiles.all[as.character(obs.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
+    sub.obs.comp <- pred.percentiles.all[as.character(pred.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
+    sub.ref.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
+    
+    #subset predicted points based on component m
+    sub.pred.comp.pts <- pred.results.ffm.all[,c("Year",as.character(ffm.names.m$flow_metric))]
+    #timeframe for predicted points, this will be used for point colors
+    ind.2014.pred <- grep("2014", sub.pred.comp.pts$Year)
+    timeframe.pred <- c(rep("1994-2014", ind.2014.pred), rep("2015-present", length(sub.pred.comp.pts$Year)-ind.2014.pred))
+    
+    #Boxplots for components
+    
+  }
+  
   
 }
 
