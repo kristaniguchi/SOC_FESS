@@ -32,8 +32,9 @@ gage.files <- list.files(gage.dir, full.names=TRUE)
 mod.files <- list.files(pred.data.dir, pattern ="\\.out$")
 
 #Functional flow metric names and labels for plots
-filename <- ("L:/CA  E-flows framework_ES/Misc/Functional Flows metrics/functional_flow_metric_modeling/all_metric_def_list_FFMs.csv")
+filename <- ("L:/CA  E-flows framework_ES/Misc/Functional Flows metrics/functional_flow_metric_modeling/all_metric_def_list_FFMs_v2.csv")
 ffm.labels <- read.csv(filename)
+  ffm.labels$metric <- ffm.labels$flow_metric
 
 
 #Loop to go through only the gage files
@@ -80,14 +81,17 @@ for (i in 1:length(gage$Gage)){
   results.pred <- ffcAPIClient::evaluate_alteration(timeseries_df = data.pred, comid = COMID, token = mytoken, plot_output_folder = output.dir)
   #reference percentiles
   ref.percentiles <- results.pred$predicted_percentiles
+    ref.percentiles$source2 <- rep("Reference", length(ref.percentiles$p10))
   ref.percentiles.wyt <- results.pred$predicted_wyt_percentiles
   #predicted results, LSPC
   pred.alteration.all <- results.pred$alteration
   pred.percentiles.all <- results.pred$ffc_percentiles
+    pred.percentiles.all$source2 <- rep("LSPC", length(pred.percentiles.all$p10))
   pred.results.ffm.all <- results.pred$ffc_results
     pred.results.ffm.all$type <- "pred"
   pred.drh.data <- results.pred$drh_data.pred
   #write outputs to dir
+  write.csv(ref.percentiles, file=paste0(output.dir,"/ref.percentiles.csv"), row.names=FALSE)
   write.csv(pred.alteration.all, file=paste0(output.dir,"/pred.alteration.all.csv"), row.names=FALSE)
   write.csv(pred.percentiles.all, file=paste0(output.dir,"/pred.percentiles.all.csv"), row.names=FALSE)
   write.csv(pred.results.ffm.all, file=paste0(output.dir,"/pred.results.ffm.all.csv"), row.names=FALSE)
@@ -136,6 +140,7 @@ for (i in 1:length(gage$Gage)){
   results.obs <- ffcAPIClient::evaluate_alteration(timeseries_df = data.obs, comid = COMID, token = mytoken, plot_output_folder = output.dir.obs)
   obs.alteration.all <- results.obs$alteration
   obs.percentiles.all <- results.obs$ffc_percentiles
+    obs.percentiles.all$source2 <- rep("Gage", length(obs.percentiles.all$p10))
   obs.results.ffm.all <- results.obs$ffc_results
     obs.results.ffm.all$type <- "obs"
   obs.drh.data <- results.obs$drh_data
@@ -253,14 +258,63 @@ for (i in 1:length(gage$Gage)){
     timeframe.pred <- c(rep("1994-2014", ind.2014.pred), rep("2015-present", length(sub.pred.comp.pts$Year)-ind.2014.pred))
     
     #Boxplots for components
+    title <- as.character(ffm.names.m$title_component[1]) #component
+    subtitle.bp <- paste0(gage.name, ": Subbasin ", subbasin)
+    characteristic <- sort(as.character(ffm.names.m$flow_characteristic)) 
+    metrics.title <- sort(as.character(ffm.names.m$title_ffm)) #boxplot title
     
+    #combine all percentiles dataframes and merge metric label names
+    mergeCols <- names(obs.percentiles.all)
+    percentiles.cbind.all <- full_join(ref.percentiles, obs.percentiles.all, by=mergeCols) %>% 
+      full_join(pred.percentiles.all, by=mergeCols) %>% 
+      merge(ffm.labels, by="metric")
+    
+    #subset percentiles for component only
+    percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
+    
+    #if peak flow plots, create boxplots in order of increasing magnitude (not based on alphabetical order)
+    if(ffm.labels$flow_component[m] == "Peak Flow"){
+      #fill color based on entire POR LSPC (add colored points), Gage, Reference
+      fill<- percentiles.cbind.all.sub.m$source2
+      #reorder peak metric plots
+      if(unique.components[m] == "Peak Flow Magnitude"){
+        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Magnitude (2-year flood, cfs)", " Magnitude (5-year flood, cfs)", " Magnitude (10-year flood, cfs)"))
+      }
+      if(unique.components[m] == "Peak Flow Duration"){
+        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Duration (2-year flood, days)", " Duration (5-year flood, days)", " Duration (10-year flood, days)"))
+      }
+      if(unique.components[m] == "Peak Flow Frequency"){
+        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Frequency (2-year flood)", " Frequency (5-year flood)", " Frequency (10-year flood)"))
+      }
+      #All years plots
+      P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+        geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+      print(P)
+      
+    }else{
+      #fill color based on entire POR LSPC (add colored points), Gage, Reference
+      fill<- percentiles.cbind.all.sub.m$source2
+      #All years plots
+      P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+        geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+      print(P)
+      
+    }
   }
-  
   
 }
 
 
 
+  
+  
+  
+  
+  
+  
+#ignore from here, old code
 #load in gage data from County web portal
 data <- read.csv("AlisoCreek_STP_DailyDischarge.csv", skip=3)
 #format date and Q into dataframe
