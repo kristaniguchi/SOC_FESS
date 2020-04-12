@@ -6,6 +6,7 @@ library("ffcAPIClient")
 library("ggplot2")
 library("scales")
 library("purrr")
+library("plyr")
 library("tidyverse")
 
 #my token for FFC API Client
@@ -14,13 +15,19 @@ mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGF
 
 #set working directory
 gage.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200326_Gauge_Data/"
-model.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/"
-pred.data.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/"
+#old calibration directories
+  #model.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/"
+  #pred.data.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/"
+  #plot.output.dir.pred <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/daily/FFMs/"
+#new calibration directories
+model.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/"
+pred.data.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/"
+plot.output.dir.pred <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs/"
+
 setwd(pred.data.dir)
-plot.output.dir.pred <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY94-Present/daily/FFMs/"
 plot.output.dir.obs <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200326_Gauge_Data/daily/FFMs/"
 
-#Gage info
+#Gage info, saved in previous calibration folder
 gage <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200312_Updated_Calibration/WY15-19_Calibration_Assessment/WY15-19_Statistical_Summary_v22M_KTQ.csv", skip=5, header=TRUE)
 #only use first 3 rows of gage info
 gage <- gage[1:3,]
@@ -50,8 +57,12 @@ for (i in 1:length(gage$Gage)){
   
   #load in hourly model prediction
   ind.data <- grep(subbasin, mod.files)
-  pred <- read.table(mod.files[ind.data], skip=22)
-  names(pred) <- c("gage", "year", "month", "day", "hour", "min", "depth", "hyd.radius", "av.vel","flow.cfs")
+  #for old calibration data
+    #pred <- read.table(mod.files[ind.data], skip=22)
+    #names(pred) <- c("gage", "year", "month", "day", "hour", "min", "depth", "hyd.radius", "av.vel","flow.cfs")
+  #for new calibration data 
+  pred <- read.table(mod.files[ind.data], skip=23)
+  names(pred) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
   #format date
   date <- paste(pred$month, pred$day, pred$year, sep="/")
   pred$date <- date
@@ -106,7 +117,8 @@ for (i in 1:length(gage$Gage)){
   if(subbasin == 403010){
     ind.gage <- grep("trunc", gage.files)
   }else{
-    ind.gage <- grep(subbasin, gage.files)
+    search.gage <- paste0("/", subbasin)
+    ind.gage <- grep(search.gage, gage.files)
   }
   #read in obs data
   obs <- read.csv(gage.files[ind.gage])
@@ -144,14 +156,36 @@ for (i in 1:length(gage$Gage)){
   obs.results.ffm.all <- results.obs$ffc_results
     obs.results.ffm.all$type <- "obs"
   obs.drh.data <- results.obs$drh_data
+  
   #write outputs to dir
   write.csv(obs.alteration.all, file=paste0(output.dir.obs,"/obs.alteration.all.csv"), row.names=FALSE)
   write.csv(obs.percentiles.all, file=paste0(output.dir.obs,"/obs.percentiles.all.csv"), row.names=FALSE)
   write.csv(obs.results.ffm.all, file=paste0(output.dir.obs,"/obs.results.ffm.all.csv"), row.names=FALSE)
   write.csv(obs.drh.data, file=paste0(output.dir.obs,"/obs.drh.data.csv"), row.names=FALSE)
   
+  #add WYT to annual results
+  #read in WYT for COMID, for now will use WYT based on sulfur creek
+  ind.wyt.file <- grep( paste0("COMID", COMID), gage.files)
+  wyt.comid <- read.csv(gage.files[ind.wyt.file])
+  #rename year col
+  names(wyt.comid)[names(wyt.comid)=="year"] <- "Year"
+  
+  #read in WYT for sulfur creek rain gage: has current dates after 2014
+  ind.sulfur <- grep( "WYT_sulfurcreek_raingage_1975_2019", gage.files)
+  wyt.precip.sulfur <- read.csv(gage.files[ind.sulfur])
+  #rename year col
+  names(wyt.precip.sulfur)[names(wyt.precip.sulfur)=="WY"] <- "Year"
+  
+  #add in WYT for sulfur creek to obs gage and pred LSPC results
+  obs.results.ffm.allwyt.comid <- data.frame(obs.results.ffm.all$Year)
+  #add WYT comid
+  obs.results.ffm.all <- merge(obs.results.ffm.all, wyt.precip.sulfur[,c("Year","WYT_Gage")], by="Year")
+  pred.results.ffm.all <- merge(pred.results.ffm.all, wyt.precip.sulfur[,c("Year","WYT_Gage")], by="Year")
+  
+  
   ################################################
   #####create plots pred vs. obs FFMs#####
+  
   
   #subset data to show overlapping dates
   #observed gage POR
@@ -219,11 +253,12 @@ for (i in 1:length(gage$Gage)){
         #set xlim and ylim to be equal axes
         limits <- c(min(sub.obs[,l],sub.pred[,l], na.rm=TRUE), max(sub.obs[,l],sub.pred[,l], na.rm=TRUE))
         #plot
-        plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], timeframe = label.years)) + 
-          geom_point(mapping = aes(x = x, y = y, col=timeframe, size=.5)) +
+        plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], wyt = sub.pred$WYT_Gage, timeframe = label.years)) + 
+          geom_point(mapping = aes(x = x, y = y, col=timeframe, shape = wyt, size=.5)) +
           labs(x = x.name, y= y.name, subtitle = gage.name, title = title) + 
           xlim(limits) + ylim(limits) +
           scale_size(guide=FALSE) + 
+          scale_color_manual(values=c("#e66101", "#5e3c99")) + 
           theme(legend.title = element_blank(), legend.position = "bottom", legend.text= element_text(size=10)) +
           guides(colour=guide_legend(override.aes = list(size = 4))) + geom_abline()
         #else only one point, just plot the point
@@ -232,6 +267,7 @@ for (i in 1:length(gage$Gage)){
         plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], timeframe = label.years)) + 
           geom_point(mapping = aes(x = x, y = y, col=timeframe, size=.5)) +
           labs(x = x.name, y= y.name, subtitle = gage.name, title = title) + 
+          scale_color_manual(values=c("#e66101", "#5e3c99")) + 
           scale_size(guide=FALSE) + theme(legend.title = element_blank(), legend.position = "bottom", legend.text= element_text(size=10)) +
           guides(colour=guide_legend(override.aes = list(size = 4))) + geom_abline()
       }
