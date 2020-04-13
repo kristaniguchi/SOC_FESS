@@ -236,7 +236,7 @@ for (i in 1:length(gage$Gage)){
     label.years <- c(rep(pre.2015.lab, ind.2014), rep(post.2014.lab, (length(sub.obs$Year)-ind.2014)))
   }
   
-  #loop to plot predicted vs obs for each ffm
+  #loop to plot predicted vs obs for each ffm and do annual flow alteration status by WYT
   for(l in 2:(length(ffm.names)-2)){
     #get flow metric and labels/title for plots
     ffm <- ffm.names[l]
@@ -262,6 +262,54 @@ for (i in 1:length(gage$Gage)){
           scale_color_manual(values=c("#e66101", "#5e3c99")) + 
           theme(legend.title = element_blank(), legend.position = "bottom", legend.text= element_text(size=10)) +
           guides(colour=guide_legend(override.aes = list(size = 4))) + geom_abline()
+        
+        #Annual alteration status for ffm l based on WYT
+        #WYT ref reformat names
+        ref.percentiles.wyt$wyt[ref.percentiles.wyt$wyt =="dry"] <- "Dry"
+        ref.percentiles.wyt$wyt[ref.percentiles.wyt$wyt =="wet"] <- "Wet"
+        ref.percentiles.wyt$wyt[ref.percentiles.wyt$wyt =="moderate"] <- "Moderate"
+        #ref percentiles for ffm i
+        ref.percentiles.metric <- ref.percentiles.wyt[ref.percentiles.wyt$metric ==ffm,]
+        #if there is a matching ref percentiles for that metric
+        if(length(ref.percentiles.metric$wyt) > 0){
+          #Gage:
+          #loop to determine alteration each year
+          obs.alteration.wyt <- NA
+          obs.alteration.dir.wyt <- NA #direction of alteration
+          
+          for(n in 1:length(obs.results.ffm.all$Year)){
+            wyt.n <- obs.results.ffm.all$WYT_Gage[n]
+            #get ffm percentiles for wyt.n
+            ref.percentiles.metric.wyt <- ref.percentiles.metric[ref.percentiles.metric$wyt == wyt.n,]
+            #if current ffm is NA, alteartion NA, else if within p10-p90, no alteration, if outside likely altered
+            if(is.na(obs.results.ffm.all[n,ffm])){
+              obs.alteration.wyt[n] <- NA
+              obs.alteration.dir.wyt[n] <- NA
+            }else{
+              if(obs.results.ffm.all[n,ffm] >= ref.percentiles.metric.wyt$p10 & obs.results.ffm.all[n,ffm] <= ref.percentiles.metric.wyt$p90){
+                obs.alteration.wyt[n] <- "Likely unaltered"
+                obs.alteration.dir.wyt[n] <- 0
+              }else{
+                obs.alteration.wyt[n] <- "Likely altered"
+                #determine direction (-1 is depleted, 1 is augmented)
+                if(obs.results.ffm.all[n,ffm] < ref.percentiles.metric.wyt$p10){
+                  obs.alteration.dir.wyt[n] <- -1
+                }else{
+                  obs.alteration.dir.wyt[n] <- 1
+                }
+              }
+            }
+          }
+          
+          #alteration data.frame and 
+          alt.df <- data.frame(Year = as.numeric(obs.results.ffm.all$Year), ffm = rep(ffm, length(obs.results.ffm.all$Year)), wyt = obs.results.ffm.all$WYT_Gage, metric.obs = obs.results.ffm.all[,ffm], obs.alteration.wyt = obs.alteration.wyt, obs.alteration.dir.wyt = as.factor(obs.alteration.dir.wyt))
+          alt.df <- na.omit(alt.df)
+          alt.plot <- ggplot(data = alt.df) + labs(subtitle = gage.name, title = title) +
+            geom_point(mapping = aes(x = Year, y = obs.alteration.dir.wyt)) +
+            scale_y_discrete(name= "Alteration Status", breaks = c(-1,0,1), labels = c("Likely Altered, Below", "Likely Unaltered", "Likely Altered, Above")) 
+          plot(alt.plot)
+        }
+
         #else only one point, just plot the point
       }else{
         #plot
@@ -275,11 +323,8 @@ for (i in 1:length(gage$Gage)){
       #print plots to screen
       print(plot)
     }
-    
-    #Annual alteration status for ffm l based on WYT
-    
-    
   }
+  
   ############################
   ###Boxplot comparisons of entire POR LSPC (add colored points), Gage, Reference
   #create combined boxplots for each component
