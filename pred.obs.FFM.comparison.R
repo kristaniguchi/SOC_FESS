@@ -237,7 +237,7 @@ for (i in 1:length(gage$Gage)){
   }
   
   #loop to plot predicted vs obs for each ffm
-  for(l in 2:(length(ffm.names)-1)){
+  for(l in 2:(length(ffm.names)-2)){
     #get flow metric and labels/title for plots
     ffm <- ffm.names[l]
     #find index of ffm in lookup table
@@ -251,7 +251,8 @@ for (i in 1:length(gage$Gage)){
       #if more than 2 points set xlim, ylim to be equal and plot
       if(length(sub.obs[,l])>1){
         #set xlim and ylim to be equal axes
-        limits <- c(min(sub.obs[,l],sub.pred[,l], na.rm=TRUE), max(sub.obs[,l],sub.pred[,l], na.rm=TRUE))
+        subset <- na.omit(cbind(sub.obs[,l],sub.pred[,l]))
+        limits <- range(subset)
         #plot
         plot <- ggplot(data = data.frame(x = sub.obs[,l], y=sub.pred[,l], wyt = sub.pred$WYT_Gage, timeframe = label.years)) + 
           geom_point(mapping = aes(x = x, y = y, col=timeframe, shape = wyt, size=.5)) +
@@ -274,6 +275,10 @@ for (i in 1:length(gage$Gage)){
       #print plots to screen
       print(plot)
     }
+    
+    #Annual alteration status for ffm l based on WYT
+    
+    
   }
   ############################
   ###Boxplot comparisons of entire POR LSPC (add colored points), Gage, Reference
@@ -325,6 +330,7 @@ for (i in 1:length(gage$Gage)){
       #All years plots
       P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
         geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
         labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
       print(P)
       
@@ -334,11 +340,13 @@ for (i in 1:length(gage$Gage)){
       #All years plots
       P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
         geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
         labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
       print(P)
       
     }
   }
+  
   
 }
 
