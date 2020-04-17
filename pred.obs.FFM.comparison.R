@@ -306,6 +306,7 @@ for (i in 1:length(gage$Gage)){
           alt.df <- na.omit(alt.df)
           alt.plot <- ggplot(data = alt.df) + labs(subtitle = gage.name, title = title) +
             geom_point(mapping = aes(x = Year, y = obs.alteration.dir.wyt)) +
+            geom_line(mapping = aes(x = Year, y = obs.alteration.dir.wyt, group= NA)) +
             scale_y_discrete(name= "Alteration Status", breaks = c(-1,0,1), labels = c("Likely Altered, Below", "Likely Unaltered", "Likely Altered, Above")) 
           plot(alt.plot)
         }
