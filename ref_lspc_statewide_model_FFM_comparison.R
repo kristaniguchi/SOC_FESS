@@ -311,9 +311,9 @@ for (i in 1:length(gage$Gage)){
   gage.percentiles.all <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200326_Gauge_Data/daily/FFMs/201020/obs.percentiles.all.csv")
   lspc.current.percentiles.all <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs/201020/pred.percentiles.all.csv")
   #change source2 to appropriate label for boxplots
-  lspc.current.percentiles.all$source2 <- rep("LSPC Current", length(lspc.current.percentiles.all$source2))
-  pred.percentiles.all$source2 <- rep("LSPC Reference", length(pred.percentiles.all$source2))
-  ref.percentiles$source2 <- rep("Statewide Reference", length(ref.percentiles$source2))
+  lspc.current.percentiles.all$source2 <- rep("LSPC\nCurrent", length(lspc.current.percentiles.all$source2))
+  pred.percentiles.all$source2 <- rep("LSPC\nReference", length(pred.percentiles.all$source2))
+  ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$source2))
   
   ############################
   ###Boxplot comparisons of entire POR LSPC current, LSPC ref, Reference statewide
@@ -340,7 +340,7 @@ for (i in 1:length(gage$Gage)){
     
     #Boxplots for components
     title <- as.character(ffm.names.m$title_component[1]) #component
-    subtitle.bp <- paste0(gage.name, ": Subbasin ", subbasin)
+    subtitle.bp <- paste0("Aliso @ STP")
     characteristic <- sort(as.character(ffm.names.m$flow_characteristic)) 
     metrics.title <- sort(as.character(ffm.names.m$title_ffm)) #boxplot title
     
@@ -352,7 +352,7 @@ for (i in 1:length(gage$Gage)){
       merge(ffm.labels, by="metric")
     
     #set levels for source2
-    percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels= c("Gage", "LSPC Current", "LSPC Reference", "Statewide Reference"))
+    percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels= c("Gage", "LSPC\nCurrent", "LSPC\nReference", "Statewide\nReference"))
     
     #subset percentiles for component only
     percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
@@ -374,8 +374,9 @@ for (i in 1:length(gage$Gage)){
       #All years plots
       P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
         geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c")) +
-        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#33a02c","#b2df8a")) +
+        labs(title=title,x ="", y = "", subtitle = subtitle.bp) +
+        theme(legend.position="bottom")
       print(P)
       
     }else{
@@ -384,8 +385,9 @@ for (i in 1:length(gage$Gage)){
       #All years plots
       P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
         geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
-        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#33a02c","#b2df8a")) +
+        labs(title=title,x ="", y = "", subtitle = subtitle.bp) +
+        theme(legend.position="bottom", legend.title=element_blank())
       print(P)
       
     }
