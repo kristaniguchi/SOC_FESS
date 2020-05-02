@@ -1,4 +1,5 @@
 #Comparison of observed and predicted FFMs for 3 gages in SOC: Aliso @ STP, Aliso @ Jeronimo, Lower Oso
+  #loop through county gages and compare to 
 
 #load library
 library("devtools")
