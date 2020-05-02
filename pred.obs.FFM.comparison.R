@@ -335,8 +335,8 @@ for (i in 1:length(gage$Gage)){
     #subset percentiles based on component m
     ind.comp.m <- grep(unique.components[m], ffm.labels$title_component)
     ffm.names.m <- ffm.labels[ind.comp.m,]
-    sub.pred.comp <- obs.percentiles.all[as.character(obs.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
-    sub.obs.comp <- pred.percentiles.all[as.character(pred.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
+    sub.obs.comp <- obs.percentiles.all[as.character(obs.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
+    sub.pred.comp <- pred.percentiles.all[as.character(pred.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
     sub.ref.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
     
     #subset predicted points based on component m
