@@ -4,7 +4,11 @@
 
 #read in all current annual metrics results to be compared to reference
 gage.curr <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200326_Gauge_Data/daily/FFMs/201020/obs.results.ffm.all.csv")
-model.curr <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs/201020/pred.results.ffm.all.csv")
+#model lspc hourly timestep
+#model.curr <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs/201020/pred.results.ffm.all.csv")
+#model lspc daily timestep
+model.curr <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200507_DailyTotalQ_prelimtofuturegcm//pred.results.ffm.all.csv")
+
 
 #read in reference annual metrics results to be compared to current to assess alteration (LSPC reference)
 model.ref.percentiles <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200422_Predevelopment_Reference_Condition/WY94-Present/daily/FFMs/201020/pred.ref.lspc.percentiles.all.csv")
@@ -59,4 +63,5 @@ for(i in 1:length(ffm)){
 
 alteration.comparison.df <- data.frame(cbind(ffm, alteration.gage, alteration.model))
 
-
+#write.csv(alteration.comparison.df, "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs/201020/alteration.lspcrefmodel.gage.lspccurrent.csv")
+write.csv(alteration.comparison.df, "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200507_DailyTotalQ_prelimtofuturegcm/alteration.lspcrefmodel.gage.lspccurrentdaily.csv")
