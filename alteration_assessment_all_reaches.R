@@ -105,7 +105,7 @@ alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
 #for (i in 1:3){
-for (i in 8:length(fnames)){
+for (i in 19:length(fnames)){
     
   #get subbasin data i
   subbasin.model <- gsub(".out","", fnames[i])
@@ -129,6 +129,8 @@ for (i in 8:length(fnames)){
   date <- paste(curr$month, curr$day, curr$year, sep="/")
   curr$date <- date
   unique.dates <- unique(date)
+  #format q to be numeric
+  curr$flow.cfs <- as.numeric(as.character(curr$flow.cfs))
   ################
   
   #calc mean daily flow for curricted data
@@ -137,7 +139,7 @@ for (i in 8:length(fnames)){
   
   for (j in 1:length(unique.dates)){
     sub.day <- curr[curr$date == unique.dates[j],]
-    flow.curr[j] <- mean(sub.day$flow.cfs)
+    flow.curr[j] <- mean(sub.day$flow.cfs, na.rm= TRUE)
   }
   #create new data frame with date and mean daily flow to go into FFC
   data.curr <- data.frame(cbind(unique.dates, flow.curr))
@@ -176,14 +178,15 @@ for (i in 8:length(fnames)){
   ####LSPC reference data######
   
   #load in reference LSPC model for same subbasin.model
-  ind.ref <- grep(paste0("/",fnames[i]), fnames.ref)
   #read in ref data
-  ref <- read.table(fnames.ref[ind.ref], skip = skip)
+  ref <- read.table(paste0(ref.dir,fnames[i]), skip=skip)
   names(ref) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
   #format date
   date2 <- paste(ref$month, ref$day, ref$year, sep="/")
   ref$date <- date2
   unique.dates2 <- unique(date2)
+  #format q to be numeric
+  ref$flow.cfs <- as.numeric(as.character(ref$flow.cfs))
   ################
   
   #calc mean daily flow for reference lspc
@@ -372,7 +375,52 @@ for (i in 8:length(fnames)){
 }
 
 
+#Alteration based on flow component:
+#if one metric in component is altered, component is considered altered
 
+#update this later!!!!
+#loop through all dirs 1-18 and combine alteration df with overall df (since started at i 19 in loop above)
+dir.ffm <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs"
+list <- list.files(dir.ffm, full.names = TRUE)
+for(y in 1:18){
+  path.open.list <- list.files(list[y], full.names = TRUE)
+  ind.file <- grep("_alteration_comparison_lspcref_statewide.csv$", path.open.list)
+  file <- read.csv(path.open.list[ind.file])
+  #append to overall df
+  alteration.df.overall <- data.frame(rbind(alteration.df.overall, file))
+}
+
+#backup.alteration.df.overall <- alteration.df.overall
+#alteration.df.overall <- backup.alteration.df.overall
+
+
+#alteration directory
+alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/"
+unique.sites <- unique(alteration.df.overall$subbasin.model)
+#join the alteration df with the ffm table
+ffm.labels$ffm <- as.character(ffm.labels$metric)
+alteration.df.overall$ffm <- as.character(alteration.df.overall$ffm)
+unique.ffm <- unique(ffm.labels$ffm)
+
+alteration.df.overall.join <- full_join(alteration.df.overall, ffm.labels, by="ffm")
+#remove NA first row
+alteration.df.overall.join <- alteration.df.overall.join[2:length(alteration.df.overall.join$COMID),]
+#add column for component.alteration
+alteration.df.overall.join$component_alteration <- alteration.df.overall.join$alteration.status
+alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, alteration.df.overall.join$component_alteration)
+alteration.df.overall.join$component_alteration <- gsub("indeterminate", NA, alteration.df.overall.join$component_alteration)
+
+#synthesis component alteration
+ind.NA <- which(is.na(alteration.df.overall.join$component_alteration))
+component.alteration.subset <- alteration.df.overall.join[-ind.NA,]
+
+#subset to only alteration per ffm
+
+
+
+
+#write.csv(alteration.df.overall.join, file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv", row.names=FALSE)
+#write.csv(alteration.df.overall.join, file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/component.alteration.df.overall.join.csv", row.names=FALSE)
 
 
 
