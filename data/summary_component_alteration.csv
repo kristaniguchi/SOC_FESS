@@ -1,0 +1,126 @@
+COMID,subbasin_model,subbasin,flow_component,component_alteration,n_ffm_altered,flow_metrics_altered,flow_char_altered
+20350507,205010+201060,J05-010,Fall pulse flow,likely_altered,2,"FA_Tim, FA_Dur"," Timing (date),  Duration (days)"
+20350507,205010+201060,J05-010,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,205010+201060,J05-010,Peak flow,likely_altered,4,"Peak_10, Peak_5, Peak_2, Peak_Fre_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Frequency (2-year flood)"
+20350507,205010+201060,J05-010,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,205010+201060,J05-010,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20348289,207010,J07-010,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20348289,207010,J07-010,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20348289,207010,J07-010,Peak flow,likely_altered,4,"Peak_10, Peak_5, Peak_2, Peak_Dur_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs), Duration (2-year flood, days)"
+20348289,207010,J07-010,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348289,207010,J07-010,Dry-season base flow,NA,0,NA,NA
+20348813,403010,L03-010,Fall pulse flow,likely_altered,1,FA_Mag, Magnitude (cfs)
+20348813,403010,L03-010,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20348813,403010,L03-010,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348813,403010,L03-010,Spring recession flow,likely_altered,2,"SP_Mag, SP_Dur"," Magnitude (cfs),  Duration (days)"
+20348813,403010,L03-010,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Tim"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Timing (date)"
+20348591,403011,L03-011,Fall pulse flow,likely_altered,1,FA_Mag, Magnitude (cfs)
+20348591,403011,L03-011,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20348591,403011,L03-011,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348591,403011,L03-011,Spring recession flow,likely_altered,1,SP_Mag, Magnitude (cfs)
+20348591,403011,L03-011,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20348517,403020,L03-020,Fall pulse flow,likely_altered,1,FA_Mag, Magnitude (cfs)
+20348517,403020,L03-020,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20348517,403020,L03-020,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348517,403020,L03-020,Spring recession flow,likely_altered,1,SP_Mag, Magnitude (cfs)
+20348517,403020,L03-020,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20348317,403030,L03-030,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20348317,403030,L03-030,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20348317,403030,L03-030,Peak flow,likely_altered,5,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Fre_5"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days),  Frequency (5-year flood)"
+20348317,403030,L03-030,Spring recession flow,NA,0,NA,NA
+20348317,403030,L03-030,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20348519,404010,L04-010,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20348519,404010,L04-010,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20348519,404010,L04-010,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348519,404010,L04-010,Spring recession flow,likely_altered,1,SP_Mag, Magnitude (cfs)
+20348519,404010,L04-010,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20350539,201010,J01-010,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20350539,201010,J01-010,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20350539,201010,J01-010,Peak flow,likely_altered,5,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Fre_10"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days),  Frequency (10-year flood)"
+20350539,201010,J01-010,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350539,201010,J01-010,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20350539,201020,J01-020,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20350539,201020,J01-020,Wet-season base flow,likely_altered,2,"Wet_BFL_Mag_10, Wet_BFL_Mag_50"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs)"
+20350539,201020,J01-020,Peak flow,likely_altered,5,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Fre_10"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days),  Frequency (10-year flood)"
+20350539,201020,J01-020,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350539,201020,J01-020,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20348697,201030,J01-030,Fall pulse flow,NA,0,NA,NA
+20348697,201030,J01-030,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20348697,201030,J01-030,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348697,201030,J01-030,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348697,201030,J01-030,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20348571,201031,J01-031,Fall pulse flow,NA,0,NA,NA
+20348571,201031,J01-031,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20348571,201031,J01-031,Peak flow,likely_altered,6,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Dur_2, Peak_Fre_10"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days), Duration (2-year flood, days),  Frequency (10-year flood)"
+20348571,201031,J01-031,Spring recession flow,likely_altered,3,"SP_Mag, SP_Dur, SP_ROC"," Magnitude (cfs),  Duration (days),  Rate of Change (% decrease per day)"
+20348571,201031,J01-031,Dry-season base flow,likely_altered,1,DS_Tim, Timing (date)
+20348641,201040,J01-040,Fall pulse flow,likely_altered,2,"FA_Tim, FA_Dur"," Timing (date),  Duration (days)"
+20348641,201040,J01-040,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20348641,201040,J01-040,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348641,201040,J01-040,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348641,201040,J01-040,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20348641,201041,J01-041,Fall pulse flow,likely_altered,2,"FA_Tim, FA_Dur"," Timing (date),  Duration (days)"
+20348641,201041,J01-041,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20348641,201041,J01-041,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348641,201041,J01-041,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348641,201041,J01-041,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20350543,201050,J01-050,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20350543,201050,J01-050,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date)"
+20350543,201050,J01-050,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20350543,201050,J01-050,Spring recession flow,likely_altered,2,"SP_Mag, SP_ROC"," Magnitude (cfs),  Rate of Change (% decrease per day)"
+20350543,201050,J01-050,Dry-season base flow,likely_altered,1,DS_Mag_90," Magnitude (90th percentile, cfs)"
+20350507,201060,J01-060,Fall pulse flow,likely_altered,2,"FA_Tim, FA_Dur"," Timing (date),  Duration (days)"
+20350507,201060,J01-060,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,201060,J01-060,Peak flow,likely_altered,4,"Peak_10, Peak_5, Peak_2, Peak_Fre_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Frequency (2-year flood)"
+20350507,201060,J01-060,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,201060,J01-060,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20350507,201061,J01-061,Fall pulse flow,NA,0,NA,NA
+20350507,201061,J01-061,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,201061,J01-061,Peak flow,likely_altered,6,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Dur_2, Peak_Fre_10"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days), Duration (2-year flood, days),  Frequency (10-year flood)"
+20350507,201061,J01-061,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,201061,J01-061,Dry-season base flow,NA,0,NA,NA
+20350507,201062,J01-062,Fall pulse flow,likely_altered,2,"FA_Tim, FA_Dur"," Timing (date),  Duration (days)"
+20350507,201062,J01-062,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,201062,J01-062,Peak flow,likely_altered,5,"Peak_10, Peak_5, Peak_2, Peak_Dur_10, Peak_Fre_10"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs),  Duration (10-year flood, days),  Frequency (10-year flood)"
+20350507,201062,J01-062,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,201062,J01-062,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20350507,201070,J01-070,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20350507,201070,J01-070,Wet-season base flow,likely_altered,1,Wet_BFL_Mag_10, Magnitude 10th percentile (cfs)
+20350507,201070,J01-070,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20350507,201070,J01-070,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,201070,J01-070,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20350507,201080,J01-080,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20350507,201080,J01-080,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,201080,J01-080,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20350507,201080,J01-080,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,201080,J01-080,Dry-season base flow,likely_altered,3,"DS_Mag_50, DS_Mag_90, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Duration (days)"
+20348283,201090,J01-090,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20348283,201090,J01-090,Wet-season base flow,likely_altered,1,Wet_BFL_Mag_10, Magnitude 10th percentile (cfs)
+20348283,201090,J01-090,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348283,201090,J01-090,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348283,201090,J01-090,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20348283,201091,J01-091,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20348283,201091,J01-091,Wet-season base flow,likely_altered,1,Wet_BFL_Mag_10, Magnitude 10th percentile (cfs)
+20348283,201091,J01-091,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348283,201091,J01-091,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348283,201091,J01-091,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20348223,201100,J01-100,Fall pulse flow,likely_altered,1,FA_Mag, Magnitude (cfs)
+20348223,201100,J01-100,Wet-season base flow,NA,0,NA,NA
+20348223,201100,J01-100,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348223,201100,J01-100,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20348223,201100,J01-100,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Duration (days)"
+20348739,203010,J03-010,Fall pulse flow,NA,0,NA,NA
+20348739,203010,J03-010,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20348739,203010,J03-010,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348739,203010,J03-010,Spring recession flow,likely_altered,2,"SP_Dur, SP_ROC"," Duration (days),  Rate of Change (% decrease per day)"
+20348739,203010,J03-010,Dry-season base flow,likely_altered,4,"DS_Mag_50, DS_Mag_90, DS_Tim, DS_Dur_WS"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs),  Timing (date),  Duration (days)"
+20348639,204010,J04-010,Fall pulse flow,likely_altered,2,"FA_Mag, FA_Tim"," Magnitude (cfs),  Timing (date)"
+20348639,204010,J04-010,Wet-season base flow,likely_altered,3,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date)"
+20348639,204010,J04-010,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20348639,204010,J04-010,Spring recession flow,likely_altered,2,"SP_Mag, SP_ROC"," Magnitude (cfs),  Rate of Change (% decrease per day)"
+20348639,204010,J04-010,Dry-season base flow,likely_altered,2,"DS_Mag_50, DS_Mag_90"," Magnitude (50th percentile, cfs),  Magnitude (90th percentile, cfs)"
+20350507,205010,J05-010,Fall pulse flow,likely_altered,3,"FA_Mag, FA_Tim, FA_Dur"," Magnitude (cfs),  Timing (date),  Duration (days)"
+20350507,205010,J05-010,Wet-season base flow,likely_altered,4,"Wet_BFL_Mag_10, Wet_BFL_Mag_50, Wet_Tim, Wet_BFL_Dur"," Magnitude 10th percentile (cfs),  Magnitude 50th percentile (cfs),  Timing (date),  Duration (days)"
+20350507,205010,J05-010,Peak flow,likely_altered,3,"Peak_10, Peak_5, Peak_2"," Magnitude (10-year flood, cfs),  Magnitude (5-year flood, cfs),  Magnitude (2-year flood, cfs)"
+20350507,205010,J05-010,Spring recession flow,likely_altered,1,SP_ROC, Rate of Change (% decrease per day)
+20350507,205010,J05-010,Dry-season base flow,NA,0,NA,NA

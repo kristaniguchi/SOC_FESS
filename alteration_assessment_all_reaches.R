@@ -105,7 +105,7 @@ alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
 #for (i in 1:3){
-for (i in 4:length(fnames)){
+for (i in 8:length(fnames)){
     
   #get subbasin data i
   subbasin.model <- gsub(".out","", fnames[i])
@@ -176,7 +176,7 @@ for (i in 4:length(fnames)){
   ####LSPC reference data######
   
   #load in reference LSPC model for same subbasin.model
-    ind.ref <- grep(fnames[i], fnames.ref)
+  ind.ref <- grep(paste0("/",fnames[i]), fnames.ref)
   #read in ref data
   ref <- read.table(fnames.ref[ind.ref], skip = skip)
   names(ref) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")

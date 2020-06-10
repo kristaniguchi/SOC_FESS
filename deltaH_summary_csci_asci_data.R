@@ -11,6 +11,52 @@ deltaH$water_year_type <- as.character(deltaH$water_year_type)
 ind.NA <- which(is.na(deltaH$deltaH))
 #remove NA values
 deltaH <- data.frame(deltaH[-ind.NA,])
+#create site.year vector
+deltaH$site.year <- paste0(deltaH$site, "_", as.character(deltaH$year))
+#list of unique sites for this analysis
+sites.deltaH <- unique(deltaH$site)
+
+#subset to only the SD sites and review values (max for curr and ref) if values are off, may only want to keep the sites where we have the subset years identified
+#list of sites from SD current group (not included in Ashmita's original dataset)
+sd.sites <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/Site_latlong/AssessmentSite_Area_Tc_Ts_Imperv_SD_revised_04122019.csv")
+unique.sd <- unique(sd.sites$BugID)
+#check to see if SD sites are okay
+#subset to only the sd sites --> may want to exclude these new SD sites because I don't know which years are good and not good
+deltaH.sd <- subset(deltaH, site %in% unique.sd)
+max(deltaH.sd$current_value[deltaH.sd$flow_metric == "SP_Dur"])
+max(deltaH.sd$current_value[deltaH.sd$flow_metric == "DS_Dur_WS"]) #looks like there are trouble years still in this dataset
+
+
+#subset deltaH values to only include years properly modeled by Ashmita
+#read in years to subset for the 
+subset.yrs <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/yearstosubsetflow_current_ashmitamodels.csv")
+#create site.year vector
+subset.yrs$site.year <- paste0(subset.yrs$Site, "_", as.character(subset.yrs$WaterYear))
+subset.yrs$site <- subset.yrs$Site
+#subset to include only sites for this anlaysis
+subset.yrs.2 <- subset(subset.yrs, site %in% sites.deltaH)
+#find unique sites that have subset years and are included in this analysis
+unique.sites.subset <- unique(subset.yrs.2$Site)
+#find unique site.years to subset deltaH data upon
+unique.site.years <- unique(subset.yrs.2$site.year)
+#add in the site.NA (those are peak magnitude metrics calcuated on entire POR)
+peak.mag.site.years <- paste(unique.sites.subset, "NA", sep="_")
+unique.site.years <- c(unique.site.years, peak.mag.site.years)
+
+#subset data to only the site.years for analysis
+sub.deltaH <- subset(deltaH, site.year %in% unique.site.years)
+#check to see if unreasonable values for duration and timing
+max(sub.deltaH$current_value[sub.deltaH$flow_metric == "SP_Dur"])
+max(sub.deltaH$current_value[sub.deltaH$flow_metric == "DS_Dur_WS"]) #looks like there are trouble years still in this dataset
+#find sites where duration is super long for dry season
+sub.deltaH$site.year[]
+
+write.csv(sub.deltaH, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/sub.deltaH.csv", row.names=FALSE)
+
+
+
+
+
 
 
 #loop to summarize delta H for each site and FFM
@@ -36,7 +82,7 @@ for(i in 1:length(unique.sites)){
     fm.j <- sub[sub$flow_metric == unique.fm[j],]
     
     #if peak mag metrics, use values as is
-    if(unique.fm[j] == "Peak_10" | unique.fm[j] == "Peak_5" | unique.fm[j] == "Peak_12"){
+    if(unique.fm[j] == "Peak_10" | unique.fm[j] == "Peak_5" | unique.fm[j] == "Peak_2"){
       new.row <- fm.j
       #names new.row same as names(delta.h.df)
       names(new.row) <- names(delta.h.df)
