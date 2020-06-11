@@ -339,8 +339,78 @@ ggsave(bar, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/zoom_ba
 
 
 
+###################
+#heatmap of alteration: component vs. flow characteristics
+
+#install packages
+#install.packages("ztable")
+library(ztable)
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("cardiomoon/ztable")
+
+require(moonBook)
+x=table(acs$Dx,acs$smoking)
+x
+
+#read in alteration summary table
+data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv")
+#exclude the additive subbasins
+data <- data[26:length(data$subbasin),]
+#subset to altered only
+altered <- data[data$alteration_status == "likely_altered",]
+#remove NA
+altered <- altered[-which(is.na(altered$subbasin)),]
+
+#subset so if there is one altered characteristic per component (remove duplicates from one subbasin so we get number of subbasins with altered flow characteristics)
+unique.altered.sites <- unique(altered$subbasin_model)
+#create empty df that will be filled
+altered.new <- altered[1,]
+#fill with NA for first row to be removed later
+altered.new[1,] <- NA
+altered.new$comp.characteristic <- NA
+
+for(i in 1:length(unique.altered.sites)){
+  sub1 <- altered[altered$subbasin_model == unique.altered.sites[i],]
+  #create vector component_characteristics in sub1
+  sub1$comp.characteristic <- paste0(sub1$flow_characteristic, "_", sub1$flow_component)
+  #remove duplicated rows based on comp.characteristic but keep only unique/distinct rows from a data frame
+  sub1 <- sub1 %>% dplyr::distinct(flow_characteristic,flow_component,  .keep_all = TRUE)
+  #save sub1 into new df
+  altered.new <- rbind(altered.new, sub1)
+}
+#remove first NA row
+altered.new <- altered.new[2:length(altered.new$subbasin),]
+
+#calculate number in each category
+ffm_summary <- data.frame(aggregate(altered.new, by = altered.new[c('flow_characteristic', 'flow_component')], length))
 
 
+#create table for heatmap
+dev.off()
+mine.heatmap <- ggplot(data = ffm_summary, mapping = aes(x = flow_characteristic,
+                                                       y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow")),
+                                                       fill = subbasin)) +
+  geom_tile() +
+  ylab(label = "Flow Component") + xlab(label="Hydrograph Element") +
+  scale_fill_gradient(name = "Number of\nAltered Subbasins",
+                      low = "#fef0d9",
+                      high = "#b30000") +
+  ggtitle(label = "Altered Subbasins in Aliso and Oso") + theme_light() +
+  theme(axis.text=element_text(size=12),
+         axis.title=element_text(size=14,face="bold"))
+
+mine.heatmap
+
+ggsave(mine.heatmap, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/heatmap_alteration.jpg", dpi=300, height=8, width=12)
+
+
+#simple study area plot highlighting focus for SAG presentation
+study <- ggplot(basins) + 
+  geom_sf(color = "grey", fill="white") +
+  xlab("") + ylab("")
+
+study + geom_sf(data = basins3, color = "yellow", fill="white", size = 1.5) +
+geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 
 
