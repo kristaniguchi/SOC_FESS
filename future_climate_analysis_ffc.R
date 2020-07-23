@@ -20,6 +20,13 @@ mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGF
 hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/Historical_WY89-05/"
 future.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/RCP85_WY30-60/"
 #within each directory, need to go into subdirs for each GCM
+hist.subdir <- list.files(hist.dir, full.names = TRUE)
+future.subdir <- list.files(future.dir, full.names = TRUE)
+#list of gcm names
+gcms <- list.files(future.dir)
+#FFM output dir for future climate scenario analysis
+output.dir <- "W:/SOC_FlowEcologyStudy/FutureClimateScenarios"
+
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
@@ -60,272 +67,248 @@ alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
 
-#update with 
-for (i in 1:length(fnames)){
+#update to loop through diff subdirs for each gcm 
+for(k in 1:length(future.subdir)){
+  #set working directory to hist.subdir[k]
+  setwd(future.subdir[k])
+  #gcm k
+  gcm.k <- gcms[k]
   
-  #get subbasin data i
-  subbasin.model <- gsub(".out","", fnames[i])
-  sub <- basin_comid_lookup[basin_comid_lookup$new.subbasinname == subbasin.model,] 
-  gage.name <- sub$Gage
-  subbasin <- as.character(sub$Subbasin)
-  COMID <- sub$COMID_forcalc
-  
-  #when reading in data, skip 23 rows, else skip 0
-  if(fnames[i]=="205010+201060.out"){
-    skip=0
-  }else{skip = 23}
-  
-  ################################################
-  ####LSPC current data
-  
-  #load in hourly model curriction
-  curr <- read.table(paste0(future.dir,fnames[i]), skip=skip)
-  names(curr) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
-  #format date
-  date <- paste(curr$month, curr$day, curr$year, sep="/")
-  curr$date <- date
-  unique.dates <- unique(date)
-  #format q to be numeric
-  curr$flow.cfs <- as.numeric(as.character(curr$flow.cfs))
-  ################
-  
-  #calc mean daily flow for curricted data
-  #empty mean daily flow vector
-  flow.curr <- NA
-  
-  for (j in 1:length(unique.dates)){
-    sub.day <- curr[curr$date == unique.dates[j],]
-    flow.curr[j] <- mean(sub.day$flow.cfs, na.rm= TRUE)
-  }
-  #create new data frame with date and mean daily flow to go into FFC
-  data.curr <- data.frame(cbind(unique.dates, flow.curr))
-  names(data.curr) <- c("date", "flow")
-  #write daily output file
-  fname <- paste0(future.dir,"daily/", subbasin.model,"_curr_daily.txt")
-  write.table(data.curr, fname, row.names = FALSE, sep = ",")
-  ################
-  
-  #calc FFMs and alteration for current data
-  #create new directory to save ffm outputs
-  dir.new <- paste0(future.dir,"daily/FFMs/",subbasin.model)
-  dir.create(dir.new)
-  #Run data.currframe through FFC online with my own gage data.curr or model data.curr
-  results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken)
-  #reference percentiles
-  ref.percentiles <- results.curr$predicted_percentiles
-  ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
-  ref.percentiles.wyt <- results.curr$predicted_wyt_percentiles
-  #predicted results, LSPC current
-  curr.alteration.all <- results.curr$alteration
-  curr.percentiles.all <- results.curr$ffc_percentiles
-  curr.percentiles.all$source2 <- rep("LSPC\nCurrent", length(curr.percentiles.all$p10))
-  curr.results.ffm.all <- results.curr$ffc_results
-  curr.results.ffm.all$type <- "curr"
-  curr.drh.data <- results.curr$drh_data.curr
-  #write outputs to dir
-  write.csv(ref.percentiles, file=paste0(dir.new,"/ref.percentiles.statewide.csv"), row.names=FALSE)
-  write.csv(curr.alteration.all, file=paste0(dir.new,"/curr.alteration.statewide.all.csv"), row.names=FALSE)
-  write.csv(curr.percentiles.all, file=paste0(dir.new,"/curr.percentiles.all.csv"), row.names=FALSE)
-  write.csv(curr.results.ffm.all, file=paste0(dir.new,"/curr.results.ffm.all.csv"), row.names=FALSE)
-  write.csv(curr.drh.data, file=paste0(dir.new,"/curr.drh.data.csv"), row.names=FALSE)
-  
-  
-  ################################################
-  ####LSPC reference data######
-  
-  #load in reference LSPC model for same subbasin.model
-  #read in ref data
-  ref <- read.table(paste0(hist.dir,fnames[i]), skip=skip)
-  names(ref) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
-  #format date
-  date2 <- paste(ref$month, ref$day, ref$year, sep="/")
-  ref$date <- date2
-  unique.dates2 <- unique(date2)
-  #format q to be numeric
-  ref$flow.cfs <- as.numeric(as.character(ref$flow.cfs))
-  ################
-  
-  #calc mean daily flow for reference lspc
-  #empty mean daily flow vector
-  flow.ref <- NA
-  
-  for (k in 1:length(unique.dates2)){
-    sub.day2 <- ref[ref$date == unique.dates2[k],]
-    flow.ref[k] <- mean(sub.day2$flow.cfs, na.rm=TRUE)
-  }
-  #if NaN, replace with NA
-  flow.ref<- as.numeric(sub("NaN", "NA", flow.ref))
-  #create new data frame with date and mean daily flow to go into FFC
-  data.ref <- data.frame(cbind(unique.dates2, flow.ref))
-  names(data.ref) <- c("date", "flow")
-  
-  #write daily output file
-  fname2 <- paste0(hist.dir,"daily/", subbasin.model,"_ref_daily.txt")
-  write.table(data.ref, fname2, row.names = FALSE, sep = ",")
-  ################
-  #calc FFMs and alteration for referved data
-  #create new directory to save ffm outputs
-  dir.new2 <- paste0(hist.dir,"daily/FFMs/",subbasin.model)
-  dir.create(dir.new2)
-  
-  #Run dataframe through FFC online with my own gage data or model data
-  results.ref <- ffcAPIClient::evaluate_alteration(timeseries_df = data.ref, comid = COMID, token = mytoken)
-  #save output df
-  ref.alteration.all <- results.ref$alteration #using statewide percentiles
-  ref.percentiles.all <- results.ref$ffc_percentiles
-  ref.percentiles.all$source2 <- rep("LSCP\nReference", length(ref.percentiles.all$p10))
-  ref.results.ffm.all <- results.ref$ffc_results
-  ref.results.ffm.all$type <- "ref"
-  ref.drh.data <- results.ref$drh_data
-  
-  #write outputs to dir
-  write.csv(ref.alteration.all, file=paste0(dir.new2,"/ref.alteration.statewide.all.csv"), row.names=FALSE)
-  write.csv(ref.percentiles.all, file=paste0(dir.new2,"/ref.percentiles.all.csv"), row.names=FALSE)
-  write.csv(ref.results.ffm.all, file=paste0(dir.new2,"/ref.results.ffm.all.csv"), row.names=FALSE)
-  write.csv(ref.drh.data, file=paste0(dir.new2,"/ref.drh.data.csv"), row.names=FALSE)
-  
-  
-  ############################
-  ###Alteration Determination between current and ref LSPC
-  
-  #Loop to determine alteration status and direction of alteration for every ffm
-  ffm <- as.character(ffm.labels$metric)
-  alteration.status <- NA
-  alteration.direction <- NA
-  alteration.status.statewide <- NA
-  alteration.direction.statewide <- NA
-  
-  
-  for(l in 1:length(ffm)){
-    #need to fix this area! if statewide his NA could change 247 chunk if you address this in the front end
-    #statewide ref model alteration status and direction for ffm i 
-    #if no data then what?
-    if(length(curr.alteration.all$status[curr.alteration.all$metric == ffm[l]]) < 1){
-      alteration.status.statewide[l] <- NA
-      alteration.direction.statewide[l] <- NA
-    }else{
-      alteration.status.statewide[l] <- curr.alteration.all$status[curr.alteration.all$metric == ffm[l]]
-      alteration.direction.statewide[l] <- curr.alteration.all$alteration_type[curr.alteration.all$metric == ffm[l]]
-    }
+  #loop through each subbasin output file for gcm.k
+  for (i in 1:length(fnames)){
     
-    #model results and median for ffm i
-    ind.ffm.l <- grep(ffm[l], names(curr.results.ffm.all))
-    model.curr.ffms.i <- as.numeric(as.character(curr.results.ffm.all[,ind.ffm.l]))
-    model.curr.i.med <- curr.percentiles.all$p50[curr.percentiles.all$metric==ffm[l]]
-    #find 10-90th ref percentiles
-    model.ref.i.90 <-  ref.percentiles.all$p90[ref.percentiles.all$metric == ffm[l]]
-    model.ref.i.10 <-  ref.percentiles.all$p10[ref.percentiles.all$metric == ffm[l]]
+    #get subbasin data i
+    subbasin.model <- gsub(".out","", fnames[i])
+    sub <- basin_comid_lookup[basin_comid_lookup$new.subbasinname == subbasin.model,] 
+    gage.name <- sub$Gage
+    subbasin <- as.character(sub$Subbasin)
+    COMID <- sub$COMID_forcalc
+    #number of rows to skip in output files
+    skip=24
     
-    #if NA values for current or reference ffms, then all are NA
-    if(is.na(model.curr.i.med) |  is.na(model.ref.i.90)){
-      alteration.status[l] <- NA
-      alteration.direction[l] <- NA
-    }else{
-      
-      #if median falls outside of 10-90, likely altered
-      if(model.curr.i.med > model.ref.i.90 | model.curr.i.med < model.ref.i.10){
-        alteration.status[l] <- "likely_altered"
-        #if it is altered determine direction of alteration high or low
-        if(model.curr.i.med > model.ref.i.90){
-          alteration.direction[l] <- "high"
-        }else{
-          alteration.direction[l] <- "low"
-        }
+    ################################################
+    ####LSPC future data
+    
+    #file name to read in
+    
+    #load in daily model prediction
+    future <- read.table(fnames[i], skip=skip)
+    names(future) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow","depth", "hyd.radius", "av.vel","flow.cfs")
+    #format date
+    date <- paste(future$month, future$day, future$year, sep="/")
+    future$date <- date
+    #format q to be numeric
+    future$flow.cfs <- as.numeric(as.character(future$flow.cfs))
+    ################
+    
+    #create new data frame with date and daily flow to go into FFC
+    data.future <- data.frame(cbind(date, future$flow.cfs))
+    names(data.future) <- c("date", "flow")
+    ################
+    
+    #calc FFMs and alteration for future data
+    #create new directory to save ffm outputs
+    dir.new <- paste0(output.dir,"/FFMs/",subbasin.model)
+    dir.create(dir.new)
+    #Run data.futureframe through FFC online with my own gage data.future or model data.future
+    results.future <- ffcAPIClient::evaluate_alteration(timeseries_df = data.future, comid = COMID, token = mytoken)
+    #reference percentiles
+    ref.percentiles <- results.future$predicted_percentiles
+    ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
+    ref.percentiles.wyt <- results.future$predicted_wyt_percentiles
+    #predicted results, LSPC future
+    future.alteration.all <- results.future$alteration
+    future.percentiles.all <- results.future$ffc_percentiles
+    future.label <- paste0("LSPC\n", gcm.k)
+    future.percentiles.all$source2 <- rep(future.label, length(future.percentiles.all$p10))
+    future.results.ffm.all <- results.future$ffc_results
+    future.results.ffm.all$type <- "future"
+    future.drh.data <- results.future$drh_data.future
+    #write outputs to dir
+    write.csv(ref.percentiles, file=paste0(dir.new,"/ref.percentiles.statewide.csv"), row.names=FALSE)
+    write.csv(future.alteration.all, file=paste0(dir.new,"/future.alteration.statewide.all.", gcm.k,".csv"), row.names=FALSE)
+    write.csv(future.percentiles.all, file=paste0(dir.new,"/future.percentiles.all.", gcm.k,".csv"), row.names=FALSE)
+    write.csv(future.results.ffm.all, file=paste0(dir.new,"/future.results.ffm.all.", gcm.k,".csv"), row.names=FALSE)
+    write.csv(future.drh.data, file=paste0(dir.new,"/future.drh.data.", gcm.k,".csv"), row.names=FALSE)
+    
+    ################################################
+    ####LSPC historical data in comparison to future climate run######
+    
+    #load in historical LSPC model for same subbasin.model
+    #read in historical data
+    historical <- read.table(paste0(hist.subdir[k],"/", fnames[i]), skip=skip)
+    names(historical) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow", "depth", "hyd.radius", "av.vel","flow.cfs")
+    #format date
+    date2 <- paste(historical$month, historical$day, historical$year, sep="/")
+    historical$date <- date2
+    #format q to be numeric
+    historical$flow.cfs <- as.numeric(as.character(historical$flow.cfs))
+
+    #create new data frame with date and mean daily flow to go into FFC
+    data.historical <- data.frame(cbind(date2, historical$flow.cfs))
+    names(data.historical) <- c("date", "flow")
+    
+    ################
+    #calc FFMs and alteration for historical data
+    #save output in same directory 
+
+    #Run dataframe through FFC online with my own gage data or model data
+    results.historical <- ffcAPIClient::evaluate_alteration(timeseries_df = data.historical, comid = COMID, token = mytoken)
+    #save output df
+    historical.alteration.all <- results.historical$alteration #using statewide percentiles
+    historical.percentiles.all <- results.historical$ffc_percentiles
+    historical.percentiles.all$source2 <- rep("LSCP\nHistorical", length(historical.percentiles.all$p10))
+    historical.results.ffm.all <- results.historical$ffc_results
+    historical.results.ffm.all$type <- "historical"
+    historical.drh.data <- results.historical$drh_data
+    
+    #write outputs to dir
+    write.csv(historical.alteration.all, file=paste0(dir.new,"/historical.alteration.statewide.all.csv"), row.names=FALSE)
+    write.csv(historical.percentiles.all, file=paste0(dir.new,"/historical.percentiles.all.csv"), row.names=FALSE)
+    write.csv(historical.results.ffm.all, file=paste0(dir.new,"/historical.results.ffm.all.csv"), row.names=FALSE)
+    write.csv(historical.drh.data, file=paste0(dir.new,"/historical.drh.data.csv"), row.names=FALSE)
+    
+    
+    ############################
+    ###Alteration Determination between future and historical LSPC
+    
+    #Loop to determine alteration status and direction of alteration for every ffm
+    ffm <- as.character(ffm.labels$metric)
+    alteration.status <- NA
+    alteration.direction <- NA
+    alteration.status.statewide <- NA
+    alteration.direction.statewide <- NA
+    
+    for(l in 1:length(ffm)){
+      #need to fix this area! if statewide his NA could change 247 chunk if you address this in the front end
+      #statewide historical model alteration status and direction for ffm i 
+      #if no data then what?
+      if(length(future.alteration.all$status[future.alteration.all$metric == ffm[l]]) < 1){
+        alteration.status.statewide[l] <- NA
+        alteration.direction.statewide[l] <- NA
       }else{
-        #if median falls within 10-90th and >50% falls within the range, then indeterminate or <50% falls within range (likely unaltered)
-        #since not altered, no alteration direction
-        alteration.direction[l] <- "none_found"
-        #determine how many values fall in the range
-        count.in.range <- length(which(model.curr.ffms.i <= model.ref.i.90 & model.curr.ffms.i >= model.ref.i.10))
-        percent.inrange <- count.in.range/length(na.omit(model.curr.ffms.i))
+        alteration.status.statewide[l] <- future.alteration.all$status[future.alteration.all$metric == ffm[l]]
+        alteration.direction.statewide[l] <- future.alteration.all$alteration_type[future.alteration.all$metric == ffm[l]]
+      }
+      
+      #model results and median for ffm i
+      ind.ffm.l <- grep(ffm[l], names(future.results.ffm.all))
+      model.future.ffms.i <- as.numeric(as.character(future.results.ffm.all[,ind.ffm.l]))
+      model.future.i.med <- future.percentiles.all$p50[future.percentiles.all$metric==ffm[l]]
+      #find 10-90th historical percentiles
+      model.historical.i.90 <-  historical.percentiles.all$p90[historical.percentiles.all$metric == ffm[l]]
+      model.historical.i.10 <-  historical.percentiles.all$p10[historical.percentiles.all$metric == ffm[l]]
+      
+      #if NA values for future or historical ffms, then all are NA
+      if(is.na(model.future.i.med) |  is.na(model.historical.i.90)){
+        alteration.status[l] <- NA
+        alteration.direction[l] <- NA
+      }else{
         
-        if(percent.inrange > 0.5){
-          alteration.status[l] <- "likely_unaltered"
-          
+        #if median falls outside of 10-90, likely altered
+        if(model.future.i.med > model.historical.i.90 | model.future.i.med < model.historical.i.10){
+          alteration.status[l] <- "likely_altered"
+          #if it is altered determine direction of alteration high or low
+          if(model.future.i.med > model.historical.i.90){
+            alteration.direction[l] <- "high"
+          }else{
+            alteration.direction[l] <- "low"
+          }
         }else{
-          alteration.status[l] <- "indeterminate"
+          #if median falls within 10-90th and >50% falls within the range, then indeterminate or <50% falls within range (likely unaltered)
+          #since not altered, no alteration direction
+          alteration.direction[l] <- "none_found"
+          #determine how many values fall in the range
+          count.in.range <- length(which(model.future.ffms.i <= model.historical.i.90 & model.future.ffms.i >= model.historical.i.10))
+          percent.inrange <- count.in.range/length(na.omit(model.future.ffms.i))
+          
+          if(percent.inrange > 0.5){
+            alteration.status[l] <- "likely_unaltered"
+            
+          }else{
+            alteration.status[l] <- "indeterminate"
+          }
         }
       }
     }
-  }
-  
-  #save into alteration data frame
-  comid.notes <- as.character(sub$Notes)
-  alteration.comparison.df <- data.frame(cbind(COMID, subbasin.model, subbasin, ffm, alteration.status, alteration.direction, alteration.status.statewide, alteration.direction.statewide,comid.notes))
-  write.csv(alteration.comparison.df, file=paste0(dir.new,"/",subbasin.model, "_alteration_comparison_lspcref_statewide.csv"),row.names=FALSE)
-  
-  #save alteration in overall df
-  alteration.df.overall <- data.frame(rbind(alteration.df.overall, alteration.comparison.df))
-  
-  ############################
-  ###Boxplot comparisons of entire POR LSPC current, LSPC ref, statewide ref
-  #create combined boxplots for each component
-  unique.components <- as.character(unique(ffm.labels$title_component))
-  for(m in 1:length(unique.components)){
-    #subset percentiles based on component m
-    ind.comp.m <- grep(unique.components[m], ffm.labels$title_component)
-    ffm.names.m <- ffm.labels[ind.comp.m,]
-    sub.curr.comp <- curr.percentiles.all[as.character(curr.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
-    sub.ref.lspc.comp <- ref.percentiles.all [as.character(ref.percentiles.all $metric) %in%  as.character(ffm.names.m$flow_metric),]
-    sub.ref.statewide.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
     
+    #save into alteration data frame
+    comid.notes <- as.character(sub$Notes)
+    alteration.comparison.df <- data.frame(cbind(COMID, subbasin.model, subbasin, ffm, alteration.status, alteration.direction, alteration.status.statewide, alteration.direction.statewide,comid.notes))
+    write.csv(alteration.comparison.df, file=paste0(dir.new,"/",subbasin.model, "_alteration_comparison_future_historical_statewide", gcm.k,".csv"),row.names=FALSE)
     
-    #Boxplots for components
-    title <- as.character(ffm.names.m$title_component[1]) #component
-    subtitle.bp <- paste0("Subbasin ", subbasin)
-    characteristic <- sort(as.character(ffm.names.m$flow_characteristic)) 
-    metrics.title <- sort(as.character(ffm.names.m$title_ffm)) #boxplot title
+    #save alteration in overall df
+    alteration.df.overall <- data.frame(rbind(alteration.df.overall, alteration.comparison.df))
     
-    #combine all percentiles dataframes and merge metric label names
-    mergeCols <- names(curr.percentiles.all)
-    percentiles.cbind.all <- full_join(sub.curr.comp, sub.ref.lspc.comp, by=mergeCols) %>% 
-      full_join(sub.ref.statewide.comp, by=mergeCols) %>% 
-      merge(ffm.labels, by="metric")
-    #save as factor and set levels for source2
-    percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c("LSPC\nCurrent","LSCP\nReference","Statewide\nReference"))
-    
-    #subset percentiles for component only
-    percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
-    
-    #if peak flow plots, create boxplots in order of increasing magnitude (not based on alphabetical order)
-    if(ffm.labels$flow_component[m] == "Peak Flow"){
-      #fill color based on entire POR LSPC (add colored points), Gage, Reference
-      fill<- percentiles.cbind.all.sub.m$source2
-      #reorder peak metric plots
-      if(unique.components[m] == "Peak Flow Magnitude"){
-        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Magnitude (2-year flood, cfs)", " Magnitude (5-year flood, cfs)", " Magnitude (10-year flood, cfs)"))
-      }
-      if(unique.components[m] == "Peak Flow Duration"){
-        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Duration (2-year flood, days)", " Duration (5-year flood, days)", " Duration (10-year flood, days)"))
-      }
-      if(unique.components[m] == "Peak Flow Frequency"){
-        percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Frequency (2-year flood)", " Frequency (5-year flood)", " Frequency (10-year flood)"))
-      }
-      #All years plots
-      P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
-        geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
-        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-      print(P)
-      #save as jpg
-      component.2 <- gsub(" ", "_", title)
-      plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
-      ggsave(plot.fname)
+    ############################
+    ###Boxplot comparisons of entire POR gcm future, historical, statewide ref
+    #create combined boxplots for each component
+    unique.components <- as.character(unique(ffm.labels$title_component))
+    for(m in 1:length(unique.components)){
+      #subset percentiles based on component m
+      ind.comp.m <- grep(unique.components[m], ffm.labels$title_component)
+      ffm.names.m <- ffm.labels[ind.comp.m,]
+      sub.future.comp <- future.percentiles.all[as.character(future.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
+      sub.historical.lspc.comp <- historical.percentiles.all [as.character(historical.percentiles.all $metric) %in%  as.character(ffm.names.m$flow_metric),]
+      sub.ref.statewide.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
       
-    }else{
-      #fill color based on entire POR LSPC (add colored points), Gage, Reference
-      fill<- percentiles.cbind.all.sub.m$source2
-      #All years plots
-      P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
-        geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-        scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
-        labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-      print(P)
-      #save as jpg
-      component.2 <- gsub(" ", "_", title)
-      plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
-      ggsave(plot.fname)
+      #Boxplots for components
+      title <- as.character(ffm.names.m$title_component[1]) #component
+      subtitle.bp <- paste0("Subbasin ", subbasin)
+      characteristic <- sort(as.character(ffm.names.m$flow_characteristic)) 
+      metrics.title <- sort(as.character(ffm.names.m$title_ffm)) #boxplot title
       
+      #combine all percentiles dataframes and merge metric label names
+      mergeCols <- names(future.percentiles.all)
+      percentiles.cbind.all <- full_join(sub.future.comp, sub.historical.lspc.comp, by=mergeCols) %>% 
+        full_join(sub.ref.statewide.comp, by=mergeCols) %>% 
+        merge(ffm.labels, by="metric")
+      #save as factor and set levels for source2
+      percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c(future.label,"LSCP\nHistorical","Statewide\nReference"))
+      
+      #subset percentiles for component only
+      percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
+      
+      #if peak flow plots, create boxplots in order of increasing magnitude (not based on alphabetical order)
+      if(ffm.labels$flow_component[m] == "Peak Flow"){
+        #fill color based on entire POR LSPC (add colored points), Gage, historical
+        fill<- percentiles.cbind.all.sub.m$source2
+        #reorder peak metric plots
+        if(unique.components[m] == "Peak Flow Magnitude"){
+          percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Magnitude (2-year flood, cfs)", " Magnitude (5-year flood, cfs)", " Magnitude (10-year flood, cfs)"))
+        }
+        if(unique.components[m] == "Peak Flow Duration"){
+          percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Duration (2-year flood, days)", " Duration (5-year flood, days)", " Duration (10-year flood, days)"))
+        }
+        if(unique.components[m] == "Peak Flow Frequency"){
+          percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Frequency (2-year flood)", " Frequency (5-year flood)", " Frequency (10-year flood)"))
+        }
+        #All years plots
+        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+          geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+          scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
+          labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+        print(P)
+        #save as jpg
+        component.2 <- gsub(" ", "_", title)
+        plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
+        ggsave(plot.fname)
+        
+      }else{
+        #fill color based on entire POR LSPC (add colored points), Gage, historical
+        fill<- percentiles.cbind.all.sub.m$source2
+        #All years plots
+        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+          geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
+          scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
+          labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
+        print(P)
+        #save as jpg
+        component.2 <- gsub(" ", "_", title)
+        plot.fname <- paste0(dir.new,"/",component.2, "_boxplots_", gcm.k,".jpeg")
+        ggsave(plot.fname)
+        
+      }
     }
   }
 }
