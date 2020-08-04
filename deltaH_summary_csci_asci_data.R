@@ -2,7 +2,12 @@
 
 
 #read in delta H data
-deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/FFMS_deltaH/FFMS_deltaH_all.csv")
+  #original run
+  #deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_original/FFMS_deltaH_all_class.csv")
+  #changed just bad years (no wet season timing) to NA and ran ffc
+  #deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs/FFMS_deltaH_all_badyrs_class.csv")
+  #changed all zero flow days to very low value 0.00001, ID all bad years (no wet season timing), replaced with NA and ran ffc
+  deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/FFMs_deltaH_all_badyrs_nonzero_class.csv")
 #round deltaH to 0.01
 deltaH$deltaH <- round(deltaH$deltaH, digits = 2)
 deltaH$water_year_type <- as.character(deltaH$water_year_type)
@@ -16,6 +21,19 @@ deltaH$site.year <- paste0(deltaH$site, "_", as.character(deltaH$year))
 #list of unique sites for this analysis
 sites.deltaH <- unique(deltaH$site)
 
+#UPDATE this depending on run
+#output file name:
+#orig
+#output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_original/deltaH_summary_all_orig.csv"
+#bad years replace with NA
+#output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs/deltaH_summary_all_badyrs.csv"
+#no zero flow days, changed to low value and bad years replace with NA
+output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/deltaH_summary_all_badyrs_nonzero.csv"
+
+
+
+#######################
+#OPTIONAL: 
 #subset to only the SD sites and review values (max for curr and ref) if values are off, may only want to keep the sites where we have the subset years identified
 #list of sites from SD current group (not included in Ashmita's original dataset)
 sd.sites <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/Site_latlong/AssessmentSite_Area_Tc_Ts_Imperv_SD_revised_04122019.csv")
@@ -53,10 +71,7 @@ sub.deltaH$site.year[]
 
 write.csv(sub.deltaH, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/sub.deltaH.csv", row.names=FALSE)
 
-
-
-
-
+#######################
 
 
 #loop to summarize delta H for each site and FFM
@@ -64,9 +79,14 @@ write.csv(sub.deltaH, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/s
 unique.sites <- unique(deltaH$site)
 length(unique.sites)
 
+#add in notes and summary.statistic column to deltah df
+deltaH$notes <- NA
+deltaH$summary.statistic <- NA
+
 #create empty dataframe for the summarized deltaH
-delta.h.df <- data.frame(matrix(nrow = 1, ncol = 8))
-names(delta.h.df) <- c("site","summary.statistic","n_year","flow_metric","current_value","reference_value","deltaH","notes")
+delta.h.df <- data.frame(matrix(nrow = 1, ncol = length(deltaH)))
+names(delta.h.df) <- c(names(deltaH))
+
 
 
 #loop through each unique site
@@ -157,5 +177,60 @@ for(i in 1:length(unique.sites)){
   
 }
 
-write.csv(delta.h.df, row.names = FALSE, file="L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/FFMS_deltaH/deltaH_summary_all_KTQ.csv")
+write.csv(delta.h.df, row.names = FALSE, file=output.filename)
 
+
+
+######################################################
+#Look at the final list of original sites used in CSCI curve development take out original sites that were screened out
+orig.sites.used <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/Site_latlong/Site_Summary_final_list_used_orig_CSCI_curves.csv")
+orig.unique.sites <- unique(orig.sites.used$StationCode)
+
+#unique sites used with good rainfall data [includes all 800 sites, need to subset to orig.unique.sites]
+#read in years to subset for the 
+subset.yrs <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/yearstosubsetflow_current_ashmitamodels.csv")
+#create site.year vector
+subset.yrs$site.year <- paste0(subset.yrs$Site, "_", as.character(subset.yrs$WaterYear))
+subset.yrs$site <- subset.yrs$Site
+#subset to include only sites for this anlaysis (orig.unique.sites)
+subset.yrs.2 <- subset(subset.yrs, site %in% orig.unique.sites)
+length(unique(subset.yrs.2$Site))
+
+#find unique sites that have subset years and are included in this analysis
+unique.sites.subset <- unique(subset.yrs.2$Site)
+#find unique site.years to subset deltaH data upon
+unique.site.years <- unique(subset.yrs.2$site.year)
+#add in the site.NA (those are peak magnitude metrics calcuated on entire POR)
+peak.mag.site.years <- paste(unique.sites.subset, "NA", sep="_")
+unique.site.years <- c(unique.site.years, peak.mag.site.years)
+
+#subset original deltaH data to only the site.years for analysis
+sub.deltaH <- subset(deltaH, site.year %in% unique.site.years)
+#check to see if unreasonable values for duration and timing
+max(sub.deltaH$current_value[sub.deltaH$flow_metric == "SP_Dur"])
+max(sub.deltaH$current_value[sub.deltaH$flow_metric == "DS_Dur_WS"]) #looks like there are trouble years still in this dataset
+
+#subset summary deltaH data to only good sites used in analysis for CSCI curve development
+#summary <- read.csv(output.filename) #if not running whole script in sequence
+summary <- delta.h.df
+
+#subset to only sites that should be used in model
+sub.deltaH.summary <- subset(summary, site %in% orig.unique.sites)
+length(unique(sub.deltaH.summary$site))
+#check out median ffm values
+median <- sub.deltaH.summary[sub.deltaH.summary$summary.statistic =="median",]
+#check to see if unreasonable values for duration and timing
+max(median$deltaH[median$flow_metric == "SP_Dur"], na.rm = TRUE)
+max(median$deltaH[median$flow_metric == "DS_Dur_WS"], na.rm = TRUE) #looks like there are trouble years still in this dataset
+max(median$deltaH[median$flow_metric == "SP_Dur"], na.rm = TRUE)
+max(median$deltaH[median$flow_metric == "DS_Dur_WS"], na.rm = TRUE) #looks like there are trouble years still in this dataset
+
+
+#check to see if unreasonable values for duration and timing from orig summary
+max(delta.h.df$deltaH[delta.h.df$flow_metric == "SP_Dur"], na.rm = TRUE)
+max(delta.h.df$deltaH[delta.h.df$flow_metric == "DS_Dur_WS"], na.rm = TRUE) #looks like there are trouble years still in this dataset
+
+
+#read csv for subset data to sites with only good years
+sub.output.filename <- gsub(".csv", "_subset.csv", output.filename)
+write.csv(sub.deltaH.summary, file = sub.output.filename, row.names = FALSE, )
