@@ -17,7 +17,7 @@ library("tidyverse")
 mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
 
 #directory of LSPC future and historical model output results
-hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/Historical_WY89-05/"
+hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/Historical_WY75-05/"
 future.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/RCP85_WY30-60/"
 #within each directory, need to go into subdirs for each GCM
 hist.subdir <- list.files(hist.dir, full.names = TRUE)
@@ -164,9 +164,9 @@ for(k in 1:length(future.subdir)){
     
     #write outputs to dir
     write.csv(historical.alteration.all, file=paste0(dir.new,"/historical.alteration.statewide.all.csv"), row.names=FALSE)
-    write.csv(historical.percentiles.all, file=paste0(dir.new,"/historical.percentiles.all.csv"), row.names=FALSE)
-    write.csv(historical.results.ffm.all, file=paste0(dir.new,"/historical.results.ffm.all.csv"), row.names=FALSE)
-    write.csv(historical.drh.data, file=paste0(dir.new,"/historical.drh.data.csv"), row.names=FALSE)
+    write.csv(historical.percentiles.all, file=paste0(dir.new,"/historical.percentiles.all.", gcm.k,".csv"), row.names=FALSE)
+    write.csv(historical.results.ffm.all, file=paste0(dir.new,"/historical.results.ffm.all.", gcm.k, ".csv"), row.names=FALSE)
+    write.csv(historical.drh.data, file=paste0(dir.new,"/historical.drh.data.",  gcm.k, ".csv"), row.names=FALSE)
     
     
     ############################
@@ -314,3 +314,4 @@ for(k in 1:length(future.subdir)){
 }
 
 
+#see XXX.R for 
