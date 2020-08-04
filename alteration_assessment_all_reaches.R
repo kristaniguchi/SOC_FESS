@@ -105,7 +105,7 @@ alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
 #for (i in 1:3){
-for (i in 19:length(fnames)){
+for (i in 1:length(fnames)){
     
   #get subbasin data i
   subbasin.model <- gsub(".out","", fnames[i])
