@@ -46,8 +46,9 @@ ffm.labels <- read.csv(filename)
 
 
 #Loop to go through only the gage files
-
-for (i in 1:length(gage$Gage)){
+for (i in 1:1){
+    
+#for (i in 1:length(gage$Gage)){
   #get gage data i
   sub <- gage[i,] #gage info
   gage.name <- sub$Gage
