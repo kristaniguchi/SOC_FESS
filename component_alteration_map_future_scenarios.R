@@ -253,6 +253,20 @@ study + geom_sf(data = basins3, color = "yellow", fill="white", size = 1.5) +
 
 
 
+######### Peak flow magnitude alteration assessment ############
+#assess how the 2, 5, 10 yr flood magnitudes changed from baseline to future scenarios
+
+
+
+
+
+
+
+
+
+
+
+
 
 ################################################# #haven't updated this section yet
 #create different alteration maps

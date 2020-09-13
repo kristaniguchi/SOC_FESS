@@ -323,7 +323,6 @@ ggplot(mag.alt.n)+
   theme(legend.position = "none", rect = element_blank(),
         line = element_blank(), text = element_blank()) 
 
-
 bar <-  ggplot(mag.alt.n) +
   geom_bar(aes(factor(flow_component),count,fill = factor(flow_component)), 
            position='dodge',stat='identity', color = NA) +
