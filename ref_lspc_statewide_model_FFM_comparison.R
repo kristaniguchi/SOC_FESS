@@ -2,6 +2,11 @@
   #Also compare Cristianitos ref gage to statewide and ref model
 
 #load library
+#load library
+install.packages("devtools")
+library("devtools")
+#devtools::install_github('ceff-tech/ffc_api_client/ffcAPIClient')
+library("ffcAPIClient")
 library("devtools")
 library("ffcAPIClient")
 library("ggplot2")
@@ -390,19 +395,28 @@ for (i in 1:length(gage$Gage)){
         theme(legend.position="bottom", legend.title=element_blank())
       print(P)
       
+      sub <- percentiles.cbind.all.sub.m[percentiles.cbind.all.sub.m$metric == "DS_Dur_WS",]
+      row.names(sub) <- as.character(sub$source2)
+      P<- ggplot(sub, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90)) +
+        geom_boxplot(stat="identity") 
+      print(P)
+      
     }
   }
   
   
 }
 
+plotData <- structure(list(Min = c(250.866197946263, 270.805621355386), `2.5%` = c(1806.60435406315, 
+                                                                                   1807.31835620068), `50%` = c(7660.214866495, 7667.78371852935
+                                                                                   ), mean = c(8598.13903058242, 8600.3276561399), `97.5%` = c(20678.7670144642, 
+                                                                                                                                               20675.0354903488), Max = c(35526.3400756986, 36782.0082581976
+                                                                                                                                               )), .Names = c("Min", "2.5%", "50%", "mean", "97.5%", "Max"), row.names = c("median", 
+                                                                                                                                                                                                                           "mean"), class = "data.frame")
 
-
-
-
-
-
-
+row.names(plotData) -> plotData$X1
+ggplot(plotData, aes(x = X1, ymin=Min, lower=`2.5%`, middle = `50%`, upper = `97.5%`, ymax = Max)) + 
+  geom_boxplot(stat="identity")
 
 #ignore from here, old code
 #load in gage data from County web portal
