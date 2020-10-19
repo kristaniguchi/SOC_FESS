@@ -1,13 +1,25 @@
-#SOC FESS: Hydraulics Calculations - Simple
+#SOC FESS: Hydraulics Calculations - rating curve development at multiple channel locations
+#Calc av depth, max depth, av. velocity, total. shear (hydradius [R] * slope * density water), total power (shear*av. vel) in LOB, MC, ROB
+
+#hydraulic variables
+hyd.vars <- c("av.depth.m", "max.depth.m","av.vel.ms","total.shear.Pa", "total.power.watt.ms")
+
 
 #### load packages ####
 library("tidyverse")
 
 #### load data ####
+#read in channel split info for each XS
+split <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/From_Megan/lookup_reach_manningsn_channeltype_splits.csv")
+#split column indices
+split.col.ind <- grep("split", names(split))
+
 #XS geometry raw data for every XS in OC survey database
 data1 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations.csv")
 data2 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations2.csv")
 data.all <- data.frame(rbind(data1, data2))
+#make sure all distance between pts is 0.1524 (0.5 ft)
+unique(data.all$Distance_M)
 
 #model reach values (slope, manning's n)
 reach.metrics <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
@@ -27,6 +39,8 @@ lookup <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/ne
   merge(reach.metrics, by = "Reach.ID") %>% 
   merge(mannings.n, by = "Reach.ID")
 
+#write.csv(lookup, file="L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/lookup_reach_manningsn_channeltype.csv", row.names=FALSE)
+
 
 #read in list of subbasins that will be modeled (not all from above will get modeled)
 modeled <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Subbasins_subset_modeledonly_source.csv") %>% 
@@ -43,13 +57,15 @@ no.param <- lookup[as.numeric(lookup$Slope) == 0,]
 xs.id <- unique(lookup$X_SECT_ID) 
 #xs.id <- xs.id[-which(is.na(xs.id))] #omit NA values
 
+#test Aliso_1_42 for split channel calcs
+#i <- grep("Aliso_1_42", xs.id)
 
 #### Loop for XS plots and calcs ####
 #loop through each XS, plot XSA to determine where to split channel
   #note: need to ID split channels and get multiple calculations for each 
   #later: add in max depth, velocity, stream power, shear stress
 
-#output the Max Q in rating curve
+#output the Max Q in rating curve for each xs
 max.Q.rating <- rep(NA, length(xs.id))
 
 for(i in 1:length(xs.id)){
@@ -64,18 +80,83 @@ for(i in 1:length(xs.id)){
   #channel type
   channel.type <- na.omit(lookup$FacilityTy[lookup$X_SECT_ID == xs.id[i]])
   
-  #plot each XS  
-  xs.prof <- ggplot(geom.sub, aes(x = station_m, y = ELEVATION_M)) +
-    geom_line() + 
-    labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1], "; ", channel.type), x = "Station (m)", y = "Elevation (m)") 
+  #add in channel split info
+  split.sub <- split[split$X_SECT_ID == xs.id[i],split.col.ind] %>% 
+    pivot_longer(names(split[,split.col.ind])) %>% 
+    as.matrix(nrow = length(split.col.ind), ncol=2) %>% 
+    data.frame()
+  #determine if splits or no splits (if first split value is NA then no)
+  if(is.na(split.sub$value[1])){
+    split.y.n <- "N"
+    split.num <- 0
+  }else{
+    split.y.n <- "Y"
+    
+    #split stations listed into a vector
+    split.stations.all <- as.numeric(na.omit(split.sub$value))
+    split.num <- length(split.stations.all)
+    #find actual station value closes to split.stations.all
+    split.stations.actual <- NA
+    for(l in 1:split.num){
+      #find index of station closest to split.stations.all
+      ind.station <- which(abs(geom.sub$station_m - split.stations.all[l])==min(abs(geom.sub$station_m - split.stations.all[l])))
+      split.stations.actual[l] <- geom.sub$station_m[ind.station] 
+    }
+    #find all of the breaks to subsection each off of (add the first and last stations to list), will use to subset channel later on
+    split.stations.to.subset <- c(0, split.stations.actual, geom.sub$station_m[length(geom.sub$station_m)])
+  }
   
-  print(xs.prof)
+  
+  ##### plot each XS ####
+
+  #general plot
+  #xs.prof <- ggplot(geom.sub, aes(x = station_m, y = ELEVATION_M)) +
+    #geom_line() + 
+    #labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1], "; ", channel.type), x = "Station (m)", y = "Elevation (m)") 
+  #print(xs.prof)
   #save plots
-  file.name <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/", subbasin.name[1], "_",xs.id[i], "_XSplot.jpg")
+  #file.name <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/", subbasin.name[1], "_",xs.id[i], "_XSplot.jpg")
   #ggsave(xs.prof, filename=file.name, dpi=300, height=5, width=8)
   
   
-  #### create rating curves for Q and depth and Q and velocity ####
+  #plot with added axes labels to determine channel positions and add vertical lines for channel splits
+  spacing <- 1
+  #if trabuco (name has L02), then spacing every 10 m 
+  if(length(grep("L02",subbasin.name ))> 0){
+    spacing <- 2
+  }
+  xs.prof2 <- ggplot(geom.sub, aes(x = station_m, y = ELEVATION_M)) +
+    geom_line() + 
+    geom_point()+
+    scale_x_continuous(breaks = round(seq(0, max(geom.sub$station_m), by = spacing),1), expand = c(0, 0)) +
+    labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1], "; ", channel.type), x = "Station (m)", y = "Elevation (m)") 
+    
+  #if channel splits, add vertical lines for channel split
+  if(split.y.n == "Y"){
+    xs.prof2 <- xs.prof2 +
+      geom_vline(xintercept = split.stations.actual, linetype="longdash")
+  }
+  
+  #print plot
+  print(xs.prof2)
+  #save plots
+  file.name2 <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/XS_plots_updated_axis_labels/", subbasin.name[1], "_",xs.id[i], "_XSplot.jpg")
+  
+  #if station > 40, width of jpg should be larger, if > 80 width should be larger
+  if(max(geom.sub$station_m) > 40 & max(geom.sub$station_m) < 80 ){
+    width.print <- 12
+  }else{
+    if(max(geom.sub$station_m) > 80){
+      width.print <- 17
+    }else{
+      width.print <- 8
+    }
+  }
+  #save plot
+  ggsave(xs.prof2, filename=file.name2, dpi=300, height=5, width=width.print)
+  
+
+  #### create rating curves for Q and WSE ####
   #subset reach parameter data (manning's n and slope)
   param.sub <- lookup %>% 
     filter(X_SECT_ID == xs.id[i]) 
@@ -83,27 +164,38 @@ for(i in 1:length(xs.id)){
   #if slope is not 0 (NA), then go on to create rating table
   if(as.numeric(param.sub$Slope) > 0){
     ####determine total Q for given water surface elevation (wse)
-    #find max_depth at capacity (based on lowest bank elev)
     bank_elev_min <- min(c(geom.sub$ELEVATION_M[1], geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)]))
     thalweg_elev <-  min(geom.sub$ELEVATION_M) #min channel elev
-    max_depth <- bank_elev_min - thalweg_elev #min bank elev minus thalweg elevation
-    
+
     #list of water surface elevations to create rating curve
     wse_m <- seq(thalweg_elev,bank_elev_min, length.out = 100)
     
-    #subset geometry data to L and R side of thalweg <- this will help with finding the L and R WSE stations
-    #thalweg.ind <- grep(thalweg_elev, geom.sub$ELEVATION_M)
-    #left.geom <- geom.sub[1:thalweg.ind[1],]
-    #right.geom <- geom.sub[(thalweg.ind[1]+1):length(geom.sub$ELEVATION_M),]
-    
-    #loop to calculate Q for every WSE
-    #create empty output vectors, first WSE is at thalweg so all values will be zero
+    #loop to calculate Q for every WSE and summarize
+    #create empty output vectors, first WSE is at thalweg elev. so all values will be zero
     q.cms <- 0
-    #top.width <- 0
-    #bottom.width <- 0
+    
+    #create output df for split channel rating curves
+    #total sections or slices
+    total.sections <- split.num + 1
+    #column names will be discharge (total), each hydraulic variable name with _ section number (1:6)
+    #create vector of column names for each slice/section
+    hyd.var.col.names <- NA
+    for(o in 1:total.sections){
+      hyd.var.col.names <- c(hyd.var.col.names, paste0(hyd.vars, "_slice", o) )
+    }
+    hyd.var.col.names <- hyd.var.col.names[2:length(hyd.var.col.names)]
+    numbercols.total <- length(hyd.var.col.names) + 1 #hyd variable columns plus Q
+    
+    #create output dataframe with each row for each WSE
+    out.rating.all <- data.frame(matrix(nrow=100, ncol=numbercols.total))
+    #first column will be zeros for zero Q
+    out.rating.all[1,] <- 0
+    #set col names
+    names(out.rating.all) <- c("q.cms", hyd.var.col.names)
     
     for (j in 2:length(wse_m)) {
       
+      #Estimating Q from manning's for WSE j
       #### interpolate all of the WSE points that intersect with channel bed/banks at WSE
       X <- geom.sub$station_m
       Y1 <- rep(wse_m[j], length(X))
@@ -163,13 +255,13 @@ for(i in 1:length(xs.id)){
       
       #hydraulic radius for each slice
       hyd.radius <- flow.area/wetted.perim #R
-      #hyd.radius <- total.flow.area/wetted.perim #R
+      
       
       #slope and manning's n taken from lookup table
       s <-as.numeric(param.sub$Slope)
-      mannings.n <- as.numeric(param.sub$Mannings_n)
+      Mannings.n <- as.numeric(param.sub$Mannings_n)
       #Manning's equation to estimate overall velocity
-      v <- (hyd.radius^(2/3)* s^(1/2))/ mannings.n #manning's equation
+      v <- (hyd.radius^(2/3)* s^(1/2))/ Mannings.n #manning's equation
       #flow in each slice
       q.cms.slice <- v*flow.area
       #total flow for that WSE
@@ -183,23 +275,177 @@ for(i in 1:length(xs.id)){
       #add velocity and Q for each slice into geom_new df, first velocity and Q is zero (at WSE)
       geom.new$velocity_ms <- c(0,  v)
       geom.new$q_cms <- c(0, q.cms.slice)
+      geom.new$flow.area <- c(0, flow.area)
+      geom.new$wetted.perim <- c(0, wetted.perim)
       
-      #add in code to calc av depth, av. velocity, total. shear (hydradius [R] * slope * density water), total power (shear*av. vel) in LOB, MC, ROB
+      ##### Hydraulic Calculations
+      #Calc av depth, max depth, av. velocity, total. shear (hydradius [R] * slope * density water), total power (shear*av. vel) in LOB, MC, ROB
       #determine where channel is split, calc values for each subsection, summarize for each subsection
       #if station with split is not included in geom.new$station.all, then all values should be zero, else parse out geom.new and summarize
-      
+      if(split.y.n == "n"){
+        #if not split (concrete channel), calc metrics across the entire XS
+        #for all of the variables, loop through the variables and find value for given flow
+
+        #flow at wse j 
+        out.rating.all$q.cms[j] <- q.cms[j] 
+        
+        #determine the hydraulic variables for each wse/Q j
+        ##depth
+        #remove zeros from depths
+        depth.nozero <- geom.new$depth_m[geom.new$depth_m >0]
+        #av depth
+        out.rating.all$av.depth.m_slice1[j] <- mean(depth.nozero, na.rm= TRUE)
+        #max depth
+        out.rating.all$max.depth.m_slice1[j] <- max(depth.nozero, na.rm= TRUE)
+        
+        #av. velocity
+        vel.nozero <- geom.new$velocity_ms[geom.new$velocity_ms >0]
+        out.rating.all$av.vel.ms_slice1[j] <- mean(vel.nozero, na.rm= TRUE)
+        
+        #total. shear (hydradius [R] * slope * density water), density water 9806 N/m3
+        #overall hydraulic radius (flow area/wetted perim)
+        hyd.radius.total <- sum(flow.area, na.rm=TRUE)/sum(wetted.perim, na.rm=TRUE)
+        out.rating.all$total.shear.Pa_slice1[j] <- hyd.radius.total * s * 9806
+        
+        #total power (shear*av. vel)
+        out.rating.all$total.power.watt.ms_slice1[j] <- out.rating.all$total.shear.Pa_slice1[j] *  out.rating.all$av.vel.ms_slice1[j]
+        
+
+      }else{
+        #else split == Y, loop through each split and calc hydraulics
+        
+        #save the one flow value that will link to all sections for each WSE
+        #flow at wse j 
+        out.rating.all$q.cms[j] <- q.cms[j] 
+        
+        for(z in 1:total.sections){
+          #determine which slice z you are working on and which cols correspond to that slice
+          ind.slice.all <- grep(z, names(out.rating.all))
+          slice.col.names <- names(out.rating.all)[ind.slice.all]
+          
+          #subset geometry into slice z using split.stations.to.subset
+          #find start and end stations for this section
+          section.split.start <- split.stations.to.subset[z]
+          section.split.end <- split.stations.to.subset[z+1]
+          #if the section is not wetted, then all values should be zero
+          #find if the section is outside of wetted geom.new, if outside then no overlap and all values 0
+          if(section.split.start < geom.new$station.all[1] & section.split.end < geom.new$station.all[1]){
+            overlap.y.n <- "no"
+          }else{
+            if(section.split.start > geom.new$station.all[length(geom.new$station.all)] & section.split.end > geom.new$station.all[length(geom.new$station.all)]){
+              overlap.y.n <- "no"
+            }else{
+              overlap.y.n <- "yes"
+            }
+          }
+          #if slice z is outside of wetted section, all values zero
+          if(overlap.y.n == "no"){
+            #all values saved as zero
+            #column index start and end 
+            out.rating.all[j,ind.slice.all] <- 0
+          }else{
+            #determine the hydraulic variables for each wse/Q j slice z
+            
+            #subset wetted area (geom.new) at the slice breaks
+            new.slice.geom <- geom.new[geom.new$station.all >= section.split.start & geom.new$station.all <= section.split.end,]
+            ##depth
+            #remove zeros from depths
+            depth.nozero <- new.slice.geom$depth_m[new.slice.geom$depth_m >0]
+            #av depth
+            out.rating.all[j, ind.slice.all[1]] <- mean(depth.nozero, na.rm= TRUE)
+            #max depth
+            out.rating.all[j, ind.slice.all[2]] <- max(depth.nozero, na.rm= TRUE)
+            
+            #av. velocity
+            vel.nozero <- new.slice.geom$velocity_ms[new.slice.geom$velocity_ms >0]
+            out.rating.all[j, ind.slice.all[3]] <- mean(vel.nozero, na.rm= TRUE)
+            
+            #total. shear (hydradius [R] * slope * density water), density water 9806 N/m3
+            #overall hydraulic radius (flow area/wetted perim)
+            hyd.radius.total <- sum(new.slice.geom$flow.area, na.rm=TRUE)/sum(new.slice.geom$wetted.perim, na.rm=TRUE)
+            out.rating.all[j, ind.slice.all[4]] <- hyd.radius.total * s * 9806
+            
+            #total power (shear*av. vel)
+            out.rating.all[j, ind.slice.all[5]] <- out.rating.all[j, ind.slice.all[4]] *  out.rating.all[j, ind.slice.all[3]]
+            
+          }
+          
+        }
+      }
     }
-    
-    #plot Q WSE rating curve
-    wse.rating <- data.frame(cbind(q.cms, wse_m))
-    rating <- ggplot(wse.rating, aes(x=q.cms, y =wse_m)) +
-      geom_line() +
-      labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = "Water Surface Elevation (m)", x = "Discharge (cms)") 
-    
-    print(rating)
     
     #save max Q in rating table to compare with flow values from model
     max.Q.rating[i] <- max(q.cms, na.rm = TRUE)
+    
+    #plot Q WSE rating curve
+    #wse.rating <- data.frame(cbind(q.cms, wse_m))
+    #rating <- ggplot(wse.rating, aes(x=q.cms, y =wse_m)) +
+     # geom_line() +
+      #labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = "Water Surface Elevation (m)", x = "Discharge (cms)") 
+    #print(rating)
+    
+
+    #fit power function to the every rating curves and save the variables in the final output
+    #note: some splits have 0 depth of water up to a certain Q, note flow threshold to post-process later
+    #remove first row of NA values
+    col.indices.rating <- 2:length(names(out.rating.all))
+    
+    for(column in col.indices.rating){
+      #subset to first column q.cms and cols
+      rating.sub <- out.rating.all[,c(1, column)]
+      #save orig column name
+      rating.name <- names(rating.sub)[2]
+      #rename col to generic name
+      names(rating.sub)[2] <- "variable"
+      
+      #if multiple zeros, clip all of the leading zeros except the last zero value
+      #ind.zeros <- which(rating.sub$variable==0)
+      #zero below threshold,if flow is <= this value, it should be post-processed to zero
+      #zero.threshold.Q <- rating.sub$q.cms[ind.zeros[length(ind.zeros)]]
+      
+      #if(length(ind.zeros)>1) {
+        #remove all except for the last zero value
+        #rating.sub <- rating.sub[ind.zeros[length(ind.zeros)]+1 : length(rating.sub$variable),] %>% 
+          #na.omit()
+      #}
+      
+      #omit zeros if taking log/log
+      #rating.sub <- rating.sub[rating.sub$variable>0,]
+      
+      #power equation should be Q = a*variable^b, transform to log log to find the a and b coeff
+      #log transform
+      #rating.sub$log.Q <- log10(rating.sub$q.cms)
+      #rating.sub$log.variable <- log10(rating.sub$variable)
+      
+      #find a and b coeff in linear log log model
+      #lm.1 <- lm(log.variable ~ log.Q, rating.sub)
+      #a <- lm.1$coefficients[1]
+      #b <- lm.1$coefficients[2]
+      
+      #predicted values
+      #rating.sub$log.var.pred <- lm.1$fitted.values
+      #rating.sub$var.pred <- 10^lm.1$fitted.values
+      
+      #plot rating curve
+      rating2 <- ggplot(rating.sub, aes(x=q.cms, y =variable)) +
+        geom_point() +
+        geom_line() +
+        labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = rating.name, x = "Discharge (cms)") 
+      
+      
+      print(rating2)
+      
+      #test --> try using approxfun to linear interpolate the positions
+      rating.fun<-approxfun(rating.sub$q.cms, rating.sub$variable, rule=1:1)
+      discharge.test<-runif(20, min(rating.sub$q.cms), max(rating.sub$q.cms)+2)
+      variable.pred <-rating.fun(discharge.test)
+      pred.data <- data.frame(cbind(discharge.test, variable.pred))
+      rating2 + geom_point(data = pred.data, aes(x=discharge.test, y=variable.pred, col="red"))
+      
+    }
+
+    
+    
     
   }
 
