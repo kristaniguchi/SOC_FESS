@@ -170,16 +170,46 @@ for(i in 1:length(xs.id)){
   #if slope is not 0 (NA), then go on to create rating table
   if(as.numeric(param.sub$Slope) > 0){
     ####determine total Q for given water surface elevation (wse)
-    #if concrete channel without max WSE station designated, use lowest bank elev
-    lowest.bank.station <- 
+
     #max WSE station: find index of closest station
-    WSE.max.station.estimate <- split$station_WSE_Max[split$X_SECT_ID == xs.id[i]]
-    ind.wse.max.station <- which(abs(geom.sub$station_m - WSE.max.station.estimate)==min(abs(geom.sub$station_m - WSE.max.station.estimate)))
-    #closest station to the max WSE (lowest bank elev)
-    WSE.max.station <- geom.sub$station_m[ind.wse.max.station] 
-    #elevation to the lowest bank at WSE.max.station
-    bank_elev_min <- geom.sub$ELEVATION_M[ind.wse.max.station]
-      #min(c(geom.sub$ELEVATION_M[1], geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)]))
+    WSE.max.station.estimate <- split$station_WSE_Max[split$X_SECT_ID == xs.id[i]]    
+    #if concrete channel without max WSE station designated, use lowest bank elev
+    if(is.na(WSE.max.station.estimate)){
+      #find max_depth at capacity (based on lowest bank elev)
+      bank_elev_min <- min(c(geom.sub$ELEVATION_M[1], geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)]))
+      #find station of WSE.max.station (lowest bank)
+      #if elev is left then WSE.max.station is first value, else it is the last
+      diff.left <- geom.sub$ELEVATION_M[1] - bank_elev_min
+      diff.right <- geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)] - bank_elev_min
+      if(diff.left == 0){
+        WSE.max.station <- geom.sub$station_m[1]
+        ind.wse.max.station <- 1
+      }else{
+        WSE.max.station <- geom.sub$station_m[length(geom.sub$ELEVATION_M)]
+        ind.wse.max.station <- length(geom.sub$ELEVATION_M)
+      }
+      
+    }else{
+      #find index of wse.max.station
+      ind.wse.max.station <- which(abs(geom.sub$station_m - WSE.max.station.estimate)==min(abs(geom.sub$station_m - WSE.max.station.estimate)))
+      #closest station to the max WSE (lowest bank elev)
+      WSE.max.station <- geom.sub$station_m[ind.wse.max.station] 
+      #elevation to the lowest bank at WSE.max.station
+      bank_elev_min <- geom.sub$ELEVATION_M[ind.wse.max.station]
+      #need to update split.stations.to.subset depending on L or R replace with WSE.max.station
+      #if elev is left then WSE.max.station is first value, else it is the last
+      diff.left <- geom.sub$ELEVATION_M[1] - bank_elev_min
+      diff.right <- geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)] - bank_elev_min
+      #if on left bank, change first split to WSE.max.station
+      if(diff.left < diff.right){
+        split.stations.to.subset[1] <-  WSE.max.station
+      }else{
+        #else it is on the right bank, change last split to WSE.max.station
+        split.stations.to.subset[length(split.stations.to.subset)] <-  WSE.max.station
+      }
+    }
+    
+    #find thalweg elevation
     thalweg_elev <-  min(geom.sub$ELEVATION_M) #min channel elev
     
     #list of water surface elevations to create rating curve
@@ -189,8 +219,8 @@ for(i in 1:length(xs.id)){
     #filter channel geometry only to exclude any weird channel floodplain features outside of the max WSE on the lowest bank elevation
     #determine if the lowest bank is on the left or the right side of channel (will filter out fp values outside of this bank)
     #find difference between station and first value vs. difference between station and last value
-    dist.to.first.pt <- abs(geom.sub$ELEVATION_M[1] - WSE.max.station)
-    dist.to.last.pt <- abs(geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)] - WSE.max.station)
+    dist.to.first.pt <- abs(geom.sub$station_m[1] - WSE.max.station)
+    dist.to.last.pt <- abs(geom.sub$station_m[length(geom.sub$ELEVATION_M)] - WSE.max.station)
     #if WSE max station is closer to the first pt, lower bank is on the left; else it is on the right
     #if lower bank is on the left (distance of lower bank station is closer to first pt)
     if(dist.to.first.pt < dist.to.last.pt){
