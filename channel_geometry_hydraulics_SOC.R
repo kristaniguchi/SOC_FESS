@@ -1,5 +1,7 @@
 #SOC FESS: Hydraulics Calculations - rating curve development at multiple channel locations
 #Calc av depth, max depth, av. velocity, total. shear (hydradius [R] * slope * density water), total power (shear*av. vel) in LOB, MC, ROB
+####update needed: update the WSE max based on identified station of lowest bank, add in horizontal blue line for max WSE to plot
+####also subset the geom to be summarized up to that lower bank station
 
 #hydraulic variables
 hyd.vars <- c("av.depth.m", "max.depth.m","av.vel.ms","total.shear.Pa", "total.power.watt.ms")
@@ -10,7 +12,7 @@ library("tidyverse")
 
 #### load data ####
 #read in channel split info for each XS
-split <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/From_Megan/lookup_reach_manningsn_channeltype_splits.csv")
+split <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/XS_plots_updated_axis_labels/lookup_reach_manningsn_channeltype_splits_10192020.csv")
 #split column indices
 split.col.ind <- grep("split", names(split))
 
@@ -59,6 +61,9 @@ xs.id <- unique(lookup$X_SECT_ID)
 
 #test Aliso_1_42 for split channel calcs
 #i <- grep("Aliso_1_42", xs.id)
+#test Segunda_S_14_3
+#i <- grep("Segunda_S_14_3", xs.id)
+
 
 #### Loop for XS plots and calcs ####
 #loop through each XS, plot XSA to determine where to split channel
@@ -73,7 +78,7 @@ for(i in 1:length(xs.id)){
   #subset geom data for xs i, calc cumulative distance across (station_m)
   geom.sub <- data.all %>% 
     filter(X_SECT_ID == xs.id[i]) %>% #filter to xs i 
-    mutate(station_m = cumsum(Distance_M) - 0.15) #calc distance across, first value should be 0, subtract 0.15 from all
+    mutate(station_m = cumsum(Distance_M) - 0.1524) #calc distance across, first value should be 0, subtract 0.15 from all
   
   #subbasin name
   subbasin.name <- na.omit(lookup$Reach.ID[lookup$X_SECT_ID == xs.id[i]])
@@ -97,6 +102,7 @@ for(i in 1:length(xs.id)){
     split.num <- length(split.stations.all)
     #find actual station value closes to split.stations.all
     split.stations.actual <- NA
+    
     for(l in 1:split.num){
       #find index of station closest to split.stations.all
       ind.station <- which(abs(geom.sub$station_m - split.stations.all[l])==min(abs(geom.sub$station_m - split.stations.all[l])))
@@ -138,7 +144,7 @@ for(i in 1:length(xs.id)){
   }
   
   #print plot
-  print(xs.prof2)
+  #print(xs.prof2)
   #save plots
   file.name2 <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/XS_plots_updated_axis_labels/", subbasin.name[1], "_",xs.id[i], "_XSplot.jpg")
   
@@ -164,11 +170,37 @@ for(i in 1:length(xs.id)){
   #if slope is not 0 (NA), then go on to create rating table
   if(as.numeric(param.sub$Slope) > 0){
     ####determine total Q for given water surface elevation (wse)
-    bank_elev_min <- min(c(geom.sub$ELEVATION_M[1], geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)]))
+    #if concrete channel without max WSE station designated, use lowest bank elev
+    lowest.bank.station <- 
+    #max WSE station: find index of closest station
+    WSE.max.station.estimate <- split$station_WSE_Max[split$X_SECT_ID == xs.id[i]]
+    ind.wse.max.station <- which(abs(geom.sub$station_m - WSE.max.station.estimate)==min(abs(geom.sub$station_m - WSE.max.station.estimate)))
+    #closest station to the max WSE (lowest bank elev)
+    WSE.max.station <- geom.sub$station_m[ind.wse.max.station] 
+    #elevation to the lowest bank at WSE.max.station
+    bank_elev_min <- geom.sub$ELEVATION_M[ind.wse.max.station]
+      #min(c(geom.sub$ELEVATION_M[1], geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)]))
     thalweg_elev <-  min(geom.sub$ELEVATION_M) #min channel elev
-
+    
     #list of water surface elevations to create rating curve
-    wse_m <- seq(thalweg_elev,bank_elev_min, length.out = 100)
+    wse_length <- 200
+    wse_m <- seq(thalweg_elev,bank_elev_min, length.out = wse_length)
+    
+    #filter channel geometry only to exclude any weird channel floodplain features outside of the max WSE on the lowest bank elevation
+    #determine if the lowest bank is on the left or the right side of channel (will filter out fp values outside of this bank)
+    #find difference between station and first value vs. difference between station and last value
+    dist.to.first.pt <- abs(geom.sub$ELEVATION_M[1] - WSE.max.station)
+    dist.to.last.pt <- abs(geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)] - WSE.max.station)
+    #if WSE max station is closer to the first pt, lower bank is on the left; else it is on the right
+    #if lower bank is on the left (distance of lower bank station is closer to first pt)
+    if(dist.to.first.pt < dist.to.last.pt){
+      #subset geom.sub from ind.wse.max.station to last 
+      geom.sub <- geom.sub[ind.wse.max.station:length(geom.sub[,1]),]
+    }else{
+      #else, lower bank is on right, subset from first point to the ind.wse.max.station
+      geom.sub <- geom.sub[1:ind.wse.max.station,]
+    }
+    
     
     #loop to calculate Q for every WSE and summarize
     #create empty output vectors, first WSE is at thalweg elev. so all values will be zero
@@ -187,7 +219,7 @@ for(i in 1:length(xs.id)){
     numbercols.total <- length(hyd.var.col.names) + 1 #hyd variable columns plus Q
     
     #create output dataframe with each row for each WSE
-    out.rating.all <- data.frame(matrix(nrow=100, ncol=numbercols.total))
+    out.rating.all <- data.frame(matrix(nrow=wse_length, ncol=numbercols.total))
     #first column will be zeros for zero Q
     out.rating.all[1,] <- 0
     #set col names
@@ -377,17 +409,18 @@ for(i in 1:length(xs.id)){
     #save max Q in rating table to compare with flow values from model
     max.Q.rating[i] <- max(q.cms, na.rm = TRUE)
     
-    #plot Q WSE rating curve
-    #wse.rating <- data.frame(cbind(q.cms, wse_m))
-    #rating <- ggplot(wse.rating, aes(x=q.cms, y =wse_m)) +
-     # geom_line() +
-      #labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = "Water Surface Elevation (m)", x = "Discharge (cms)") 
-    #print(rating)
+    #write.csv out.rating.all
+    file.name.outrating <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_data/", subbasin.name[1], "_",xs.id[i], "_ratingcurve.data.csv")
+    write.csv(out.rating.all, file = file.name.outrating, row.names = FALSE)
     
+    #plot Q WSE rating curve
+    wse.rating <- data.frame(cbind(q.cms, wse_m))
+    rating <- ggplot(wse.rating, aes(x=q.cms, y =wse_m)) +
+      geom_line() +
+      labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = "Water Surface Elevation (m)", x = "Discharge (cms)") 
+    #print(rating)
 
-    #fit power function to the every rating curves and save the variables in the final output
-    #note: some splits have 0 depth of water up to a certain Q, note flow threshold to post-process later
-    #remove first row of NA values
+    #plot each rating curve and save
     col.indices.rating <- 2:length(names(out.rating.all))
     
     for(column in col.indices.rating){
@@ -398,55 +431,32 @@ for(i in 1:length(xs.id)){
       #rename col to generic name
       names(rating.sub)[2] <- "variable"
       
-      #if multiple zeros, clip all of the leading zeros except the last zero value
-      #ind.zeros <- which(rating.sub$variable==0)
-      #zero below threshold,if flow is <= this value, it should be post-processed to zero
-      #zero.threshold.Q <- rating.sub$q.cms[ind.zeros[length(ind.zeros)]]
-      
-      #if(length(ind.zeros)>1) {
-        #remove all except for the last zero value
-        #rating.sub <- rating.sub[ind.zeros[length(ind.zeros)]+1 : length(rating.sub$variable),] %>% 
-          #na.omit()
-      #}
-      
-      #omit zeros if taking log/log
-      #rating.sub <- rating.sub[rating.sub$variable>0,]
-      
-      #power equation should be Q = a*variable^b, transform to log log to find the a and b coeff
-      #log transform
-      #rating.sub$log.Q <- log10(rating.sub$q.cms)
-      #rating.sub$log.variable <- log10(rating.sub$variable)
-      
-      #find a and b coeff in linear log log model
-      #lm.1 <- lm(log.variable ~ log.Q, rating.sub)
-      #a <- lm.1$coefficients[1]
-      #b <- lm.1$coefficients[2]
-      
-      #predicted values
-      #rating.sub$log.var.pred <- lm.1$fitted.values
-      #rating.sub$var.pred <- 10^lm.1$fitted.values
-      
       #plot rating curve
       rating2 <- ggplot(rating.sub, aes(x=q.cms, y =variable)) +
-        geom_point() +
+        #geom_point() +
         geom_line() +
         labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1]), y = rating.name, x = "Discharge (cms)") 
       
+      #Attemp smoothing using spline but still follows stepping features of curve, will use approxfun() to interpolate the values
+      #loess() #another option but don't know equation off the bat for each relationship
+      #test <- smooth.spline(rating.sub$q.cms, rating.sub$variable)
+      #smooth the line using spline is another option but gives very similar to original values, doesn't do much
+      #test<- spline(rating.sub$q.cms, rating.sub$variable)
+      #add smoothed spline to plot
+      #spline.data <- data.frame(cbind(test$x, test$y))
+      #rating2 + geom_line(data = spline.data, aes(x=X1, y=X2), color="red")
       
-      print(rating2)
+      #print(rating2)
       
-      #test --> try using approxfun to linear interpolate the positions
-      rating.fun<-approxfun(rating.sub$q.cms, rating.sub$variable, rule=1:1)
-      discharge.test<-runif(20, min(rating.sub$q.cms), max(rating.sub$q.cms)+2)
-      variable.pred <-rating.fun(discharge.test)
-      pred.data <- data.frame(cbind(discharge.test, variable.pred))
-      rating2 + geom_point(data = pred.data, aes(x=discharge.test, y=variable.pred, col="red"))
+      #filename
+      file.name.ratingplot <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_plots/", subbasin.name[1], "_",xs.id[i], "_",rating.name,".jpg")
       
+      #save plot
+      ggsave(rating2, filename=file.name.ratingplot, dpi=300, height=4, width=8)
+      
+
     }
 
-    
-    
-    
   }
 
 }
