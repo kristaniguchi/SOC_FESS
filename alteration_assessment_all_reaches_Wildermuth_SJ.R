@@ -54,6 +54,8 @@ alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=7))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "comid.notes")
 #names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
+ffc.errors <- NA
+
 #for (i in 1:3){
 for (i in 1:length(fnames)){
   
@@ -81,42 +83,55 @@ for (i in 1:length(fnames)){
   #create new directory to save ffm outputs
   dir.new <- paste0(curr.dir,"FFMs/",subbasin.model)
   dir.create(dir.new)
-  #Run data.currframe through FFC online with my own gage data.curr or model data.curr
-  results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken)
-  #reference percentiles
-  ref.percentiles <- results.curr$predicted_percentiles
-  ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
-  ref.percentiles.wyt <- results.curr$predicted_wyt_percentiles
-  #predicted results, LSPC current
-  curr.alteration.all <- results.curr$alteration
-  curr.percentiles.all <- results.curr$ffc_percentiles
-  curr.percentiles.all$source2 <- rep("GSFlow\nCurrent", length(curr.percentiles.all$p10))
-  curr.results.ffm.all <- results.curr$ffc_results
-  curr.results.ffm.all$type <- "curr"
-  curr.drh.data <- results.curr$drh_data.curr
-  #write outputs to dir
-  write.csv(ref.percentiles, file=paste0(dir.new,"/ref.percentiles.statewide.csv"), row.names=FALSE)
-  write.csv(curr.alteration.all, file=paste0(dir.new,"/curr.alteration.statewide.all.csv"), row.names=FALSE)
-  write.csv(curr.percentiles.all, file=paste0(dir.new,"/curr.percentiles.all.csv"), row.names=FALSE)
-  write.csv(curr.results.ffm.all, file=paste0(dir.new,"/curr.results.ffm.all.csv"), row.names=FALSE)
-  write.csv(curr.drh.data, file=paste0(dir.new,"/curr.drh.data.csv"), row.names=FALSE)
   
-  #save in overall alteration df
-  comid2 <- curr.alteration.all$comid
-  subbasin.model2 <- rep(subbasin.model, length(curr.alteration.all$comid))
-  subbasin2 <- rep(subbasin.new, length(curr.alteration.all$comid))
-  ffm2 <- curr.alteration.all$metric
-  alteration.status2 <- curr.alteration.all$status
-  alteration.direction2 <- curr.alteration.all$alteration_type
-  comid.notes2 <- rep("", length(curr.alteration.all$comid))
-  #save in output df
-  outdf <- data.frame(cbind(comid2, subbasin.model2, subbasin2, ffm2, alteration.status2, alteration.direction2, comid.notes2))
-  names(outdf) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "comid.notes")
-  #append to overall df
-  alteration.df.overall <- rbind(alteration.df.overall, outdf)
-  
+  #Try catch errors in evaluate alteration, skip iteration
+  tryCatch({
+    #Run data.currframe through FFC online with my own gage data.curr or model data.curr
+    results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken, plot_output_folder = dir.new)
+    #reference percentiles
+    ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
+    ref.percentiles.wyt <- results.curr$predicted_wyt_percentiles
+    #predicted results, LSPC current
+    curr.alteration.all <- results.curr$alteration
+    curr.percentiles.all <- results.curr$ffc_percentiles
+    curr.percentiles.all$source2 <- rep("GSFlow\nCurrent", length(curr.percentiles.all$p10))
+    curr.results.ffm.all <- results.curr$ffc_results
+    curr.results.ffm.all$type <- "curr"
+    curr.drh.data <- results.curr$drh_data.curr
+    #write outputs to dir
+    write.csv(ref.percentiles, file=paste0(dir.new,"/ref.percentiles.statewide.csv"), row.names=FALSE)
+    write.csv(curr.alteration.all, file=paste0(dir.new,"/curr.alteration.statewide.all.csv"), row.names=FALSE)
+    write.csv(curr.percentiles.all, file=paste0(dir.new,"/curr.percentiles.all.csv"), row.names=FALSE)
+    write.csv(curr.results.ffm.all, file=paste0(dir.new,"/curr.results.ffm.all.csv"), row.names=FALSE)
+    write.csv(curr.drh.data, file=paste0(dir.new,"/curr.drh.data.csv"), row.names=FALSE)
+    
+    #save in overall alteration df
+    comid2 <- curr.alteration.all$comid
+    subbasin.model2 <- rep(subbasin.model, length(curr.alteration.all$comid))
+    subbasin2 <- rep(subbasin.new, length(curr.alteration.all$comid))
+    ffm2 <- curr.alteration.all$metric
+    alteration.status2 <- curr.alteration.all$status
+    alteration.direction2 <- curr.alteration.all$alteration_type
+    comid.notes2 <- rep("", length(curr.alteration.all$comid))
+    #save in output df
+    outdf <- data.frame(cbind(comid2, subbasin.model2, subbasin2, ffm2, alteration.status2, alteration.direction2, comid.notes2))
+    names(outdf) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "comid.notes")
+    #append to overall df
+    alteration.df.overall <- rbind(alteration.df.overall, outdf)
+    
+    }, error = function(e) {
+      print(paste0(i, " FFC Error"))
+      ffc.errors[i] <- subbasin.model
+    #}, warning = function(w) {
+      #print(warnings()) #could delete this if not necessary
+    })
+
 }
 
+
+unique(alteration.df.overall$subbasin.model)
+ind.ds <- grep("DS", alteration.df.overall$ffm)
+alteration.df.overall[ind.ds,]
 
 #Alteration based on flow component:
 #if one metric in component is altered, component is considered altered
