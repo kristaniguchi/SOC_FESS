@@ -12,7 +12,9 @@ library("plyr")
 library("tidyverse")
 
 #my token for FFC API Client
-mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
+#old token:
+  #mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
+mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE2MDM5OTIyNjZ9.-HNCqqu-P_g0l7LLsD2PeUWgMtakzNZMynzVt-7QUcg"
 
 #directories for current Wildermuth (reference based on statewide model)
 curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200929_Wildermuth_Model_Results/Wildermuth_Model_Results_for_SCCWRP/"
@@ -56,7 +58,8 @@ names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", 
 
 ffc.errors <- NA
 
-#for (i in 1:3){
+#test i=3 site that works
+
 for (i in 1:length(fnames)){
   
   #get subbasin data i
