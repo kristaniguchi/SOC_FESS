@@ -101,6 +101,8 @@ for(i in 1:length(unique.sites)){
           median[,5:6] <- NA
           median[,7] <- median(fm.j$deltaH, na.rm = TRUE)
           median[,8] <- NA
+          median[,2] <- NA
+          median[,11] <- NA
         }
       #mean, use min row but change values
       mean  <- min
@@ -108,7 +110,8 @@ for(i in 1:length(unique.sites)){
       mean[,5:6] <- NA
       mean[,7] <- mean(fm.j$deltaH, na.rm = TRUE)
       mean[,8] <- NA
-      
+      mean[,2] <- NA
+      mean[,11] <- NA
       #n number of years with flow metric value, repeat value 4 times for 4 rows min max med mean
       n <- length(na.omit(fm.j$deltaH))
       n.years <- rep(n, 4)
