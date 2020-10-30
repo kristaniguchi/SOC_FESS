@@ -1,21 +1,26 @@
-#Apply rating curves to the discharge data
+#Apply rating curves to the discharge data from LSPC model
 #for every subbasin, loop through read in hydraulic rating curve data, use approxfun to interpolate hyd variables based on flow
+  #different script to translate wildermuth model outputs
 
 #load libraries
 library("tidyverse")
+#install.packages("readr")
+library("readr")
 
-#directory and files for LSPC model
-flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/"
-list.files <- list.files(flow.dir, full.names = TRUE, pattern ="\\.txt$")
-subbasins <- list.files(flow.dir, pattern ="\\.txt$") %>% 
-  strsplit(split="_")
+###UPDATE THIS: directory and files for LSPC model
+#current recalibration--> needs to be updated to point to daily flow (once ready)
+flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201027_Aliso_Recalibration/Model_Output_WY1993-2019/"
+list.files <- list.files(flow.dir, full.names = TRUE, pattern ="\\.out$")
+subbasins <- list.files(flow.dir, pattern ="\\.out$") %>% 
+  strsplit(split="\\.")
 subbasins <- sapply(subbasins, `[`, 1)
 
 #directory and files for rating tables
 rating.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_data/"
 list.files.rating <- list.files(rating.dir, full.names = TRUE, pattern ="\\.csv$")
 
-#output directory for the hydraulics output
+###UPDATE THIS: output directory for the hydraulics output
+#current recalibration
 output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP/"
 
 #lookup table with X_Sect_ID, Reach.ID (used for wildermuth), LSPC.ID
@@ -29,13 +34,22 @@ lookup <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/ne
   select(X_SECT_ID, Reach.ID) %>% 
   merge(reach.metrics2, by = "Reach.ID") 
   
+#determine which sites have reach parameters, when slope = 0, needs slope calculated
+param.sites <- lookup[as.numeric(lookup$Slope) > 0,]
+
+#remove sites without reach params from list files
+#find index of param sites in subbasin list
+ind.paramsites <- which(subbasins %in% param.sites$LSPC.ID)
+subbasins <- subbasins[ind.paramsites]
+#subset list.files with only sites with reach params
+list.files <- list.files[ind.paramsites]
+
 
 #test index with Aliso
 #i <- grep(201020, list.files)
 
 for(i in 1:length(list.files)){
   #read in discharge data
-  #####NEED UPDATE: add in if ends in .txt read.table, else read.csv
   q.data <- read.table(list.files[i], sep=",", header=TRUE)
   #output data in cfs, need to convert to cms
   q.data$q.cms <- q.data$flow/35.3147
@@ -84,6 +98,6 @@ for(i in 1:length(list.files)){
   }
   
   #write output csv into output directory
-  file.name.output <- paste0(output.dir,Reach.ID, "_hydraulic_outputs.csv")
-  write.csv(output.data, row.names=FALSE, file=file.name.output)
+  file.name.output <- paste0(output.dir, Reach.ID, "_hydraulic_outputs.csv")
+  write_csv(output.data,  path=file.name.output)
 }
