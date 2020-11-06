@@ -54,6 +54,7 @@ lookup <- merge(lookup, modeled, by = "Reach.ID") %>%
 
 #determine which sites don't have reach parameters, these need reach slopes calculated
 no.param <- lookup[as.numeric(lookup$Slope) == 0,]
+#write.csv(no.param, file="L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/missing.slope.XSECTID.csv")
 
 #unique ID
 xs.id <- unique(lookup$X_SECT_ID) 
