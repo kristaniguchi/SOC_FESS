@@ -10,11 +10,19 @@ library("scales")
 library("purrr")
 library("plyr")
 library("tidyverse")
+#to uninstall package and reinstall (if updates to R package were made)
+#remove.packages("ffcAPIClient") #uninstall, restart R session
+#install.packages("devtools")
+#library("devtools")
+#devtools::install_github('ceff-tech/ffc_api_client/ffcAPIClient')
+#install.packages("ffcAPIClient")
+#library("ffcAPIClient")
+
 
 #my token for FFC API Client
 #old token:
   #mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
-mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE2MDM5OTIyNjZ9.-HNCqqu-P_g0l7LLsD2PeUWgMtakzNZMynzVt-7QUcg"
+mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RhbmlndWNoaUBnbWFpbC5jb20iLCJyb2xlIjoiVVNFUiIsImlhdCI6MTYwNDQ0MTk5MH0.KA5lFsGM2loZSKdf4Di0b_Wcjz4PessSjI7BNOOBcLo"
 
 #directories for current Wildermuth (reference based on statewide model)
 curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200929_Wildermuth_Model_Results/Wildermuth_Model_Results_for_SCCWRP/"
@@ -92,6 +100,7 @@ for (i in 1:length(fnames)){
     #Run data.currframe through FFC online with my own gage data.curr or model data.curr
     results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken, plot_output_folder = dir.new)
     #reference percentiles
+    ref.percentiles <- results.curr$predicted_percentiles
     ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
     ref.percentiles.wyt <- results.curr$predicted_wyt_percentiles
     #predicted results, LSPC current
