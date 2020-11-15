@@ -8,20 +8,33 @@ library("tidyverse")
 library("readr")
 
 ###UPDATE THIS: directory and files for LSPC model
-#current recalibration--> needs to be updated to point to daily flow (once ready)
-flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201027_Aliso_Recalibration/Model_Output_WY1993-2019/"
+#current recalibration update from 201105
+flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/"
 list.files <- list.files(flow.dir, full.names = TRUE, pattern ="\\.out$")
 subbasins <- list.files(flow.dir, pattern ="\\.out$") %>% 
   strsplit(split="\\.")
 subbasins <- sapply(subbasins, `[`, 1)
+
+#optional: to run only for missing slope sites, filter list.files and subbasins to only include those that didn't have slope
+missing.slope <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/missing.slope.XSECTID.csv")
+#only include LSPC sites
+missing.slope <- missing.slope[missing.slope$Source == "LSPC",]
+#find index of missing sites that need to be run
+ind.list.files <- which(subbasins %in% missing.slope$LSPC.ID)
+#subset to missing sites
+list.files <- list.files[ind.list.files]
+subbasins <- subbasins[ind.list.files]
+
 
 #directory and files for rating tables
 rating.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_data/"
 list.files.rating <- list.files(rating.dir, full.names = TRUE, pattern ="\\.csv$")
 
 ###UPDATE THIS: output directory for the hydraulics output
-#current recalibration
-output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP/"
+#current recalibration update from 201105
+output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP_recalibration_update/"
+#create directory for outputs
+dir.create(output.dir)
 
 #lookup table with X_Sect_ID, Reach.ID (used for wildermuth), LSPC.ID
 #model reach values (slope, manning's n)
@@ -47,12 +60,23 @@ list.files <- list.files[ind.paramsites]
 
 #test index with Aliso
 #i <- grep(201020, list.files)
-
+#for(i in 1:length(list.files)){
 for(i in 1:length(list.files)){
   #read in discharge data
-  q.data <- read.table(list.files[i], sep=",", header=TRUE)
+  q.data <- read.table(list.files[i], skip=23)
+  names(q.data) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "av.depth", "av.vel","flow.cfs")
+  #format date
+  #update to date.time since hourly data
+  #add leading zero to hour
+  NHOUR <- sprintf("%02d",q.data$hour)
+  date <- paste0(q.data$month, "/", q.data$day, "/", q.data$year, " ", NHOUR, ":00")
+  #date <- paste(q.data$month, q.data$day, q.data$year, sep="/")
+  q.data$date <- date
+  unique.dates <- unique(date)
+  ################
+  
   #output data in cfs, need to convert to cms
-  q.data$q.cms <- q.data$flow/35.3147
+  q.data$q.cms <- q.data$flow.cfs/35.3147
   
   #find Reach.ID
   Reach.ID <- lookup$Reach.ID[lookup$LSPC.ID == subbasins[i]]
@@ -74,12 +98,16 @@ for(i in 1:length(list.files)){
   #max(output.data$q.cms)
   
   for(column in col.indices.rating){
-    #subset to first column q.cms and cols
+    #subset to first column q.cms and cols and remove NA values (if any)
     rating.sub <- rating.data[,c(1, column)]
     #save orig column name
     rating.name <- names(rating.sub)[2]
     #rename col to generic name
     names(rating.sub)[2] <- "variable"
+    #remove potential -inf values and na
+    rating.sub$variable[is.infinite(rating.sub$variable)] <- NA
+    #remove NA
+    rating.sub <- na.omit(rating.sub)
     
     #Use approxfun to linear interpolate the hyd variables based on Q
     rating.fun <- approxfun(rating.sub$q.cms, rating.sub$variable, rule=1:1)
@@ -89,7 +117,7 @@ for(i in 1:length(list.files)){
     #NA values are when discharge is greater than rating table discharge, replace NA with max variable that can be predicted
     if(length(which(is.na(variable.pred))) > 0 ){
       max.var.rating <- max(rating.sub$variable)
-      variable.pred[which(is.na(variable.pred))] <- paste0(">", max.var.rating)
+      variable.pred[which(is.na(variable.pred))] <- max.var.rating
     }
     
     #write this into new spreadsheet
