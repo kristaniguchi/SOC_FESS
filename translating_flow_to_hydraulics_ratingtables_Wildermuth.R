@@ -25,6 +25,17 @@ subbasins <- list.files(flow.dir, pattern ="\\.csv$") %>%
   strsplit(split = "\\.") 
 subbasins <- sapply(subbasins, `[`, 1)
 
+#optional: to run only for missing slope sites, filter list.files and subbasins to only include those that didn't have slope
+missing.slope <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/missing.slope.XSECTID.csv")
+#only include LSPC sites
+missing.slope <- missing.slope[missing.slope$Source == "Wildermuth",]
+#find index of missing sites that need to be run
+ind.list.files <- which(subbasins %in% missing.slope$Reach.ID)
+#subset to missing sites
+list.files <- list.files[ind.list.files]
+subbasins <- subbasins[ind.list.files]
+
+
 #directory and files for rating tables
 rating.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_data/"
 list.files.rating <- list.files(rating.dir, full.names = TRUE, pattern ="\\.csv$")
@@ -106,8 +117,12 @@ for(i in 1:length(list.files)){
     rating.name <- names(rating.sub)[2]
     #rename col to generic name
     names(rating.sub)[2] <- "variable"
+    #remove potential -inf values and na
+    rating.sub$variable[is.infinite(rating.sub$variable)] <- NA
+    #remove NAs
+    rating.sub <- na.omit(rating.sub)
     
-    #Use approxfun to linear interpolate the hyd variables based on Q
+    #Use approxfun to linear interpolate the hyd variables based on Q, NA values are outside of rating range
     rating.fun <- approxfun(rating.sub$q.cms, rating.sub$variable, rule=1:1)
     variable.pred <-rating.fun(output.data$q.cms)
     #max(variable.pred, na.rm = TRUE)
@@ -115,7 +130,7 @@ for(i in 1:length(list.files)){
     #NA values are when discharge is greater than rating table discharge, replace NA with max variable that can be predicted
     if(length(which(is.na(variable.pred))) > 0 ){
       max.var.rating <- max(rating.sub$variable)
-      variable.pred[which(is.na(variable.pred))] <- paste0(">", max.var.rating)
+      variable.pred[which(is.na(variable.pred))] <- max.var.rating
     }
     
     #write this into new spreadsheet
