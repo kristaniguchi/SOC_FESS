@@ -23,10 +23,11 @@ data.all <- data.frame(rbind(data1, data2))
 #make sure all distance between pts is 0.1524 (0.5 ft)
 unique(data.all$Distance_M)
 
-#model reach values (slope, manning's n)
+###model reach values (slope, manning's n)
 reach.metrics <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
   select("Reach.ID", "LSPC.ID", "Slope", "Mannings.n", "Downstream.ID", "Downstream.LSPC.ID")
 reach.metrics2 <- reach.metrics[2:length(reach.metrics$Reach.ID),]
+
 
 #manning's n at the pourpoint reach [use this value rather than the reach average above]
 mannings.n <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/X_Sections_pourpts_modeled_condition2_mannings.csv") %>% 
@@ -118,7 +119,7 @@ for(i in 1:length(xs.id)){
 
   #general plot
   #xs.prof <- ggplot(geom.sub, aes(x = station_m, y = ELEVATION_M)) +
-    #geom_line() + 
+   #geom_line() + 
     #labs(title = xs.id[i], subtitle = paste0("Subbasin: ", subbasin.name[1], "; ", channel.type), x = "Station (m)", y = "Elevation (m)") 
   #print(xs.prof)
   #save plots
@@ -198,10 +199,10 @@ for(i in 1:length(xs.id)){
       #elevation to the lowest bank at WSE.max.station
       bank_elev_min <- geom.sub$ELEVATION_M[ind.wse.max.station]
       #need to update split.stations.to.subset depending on L or R replace with WSE.max.station
-      #if elev is left then WSE.max.station is first value, else it is the last
-      diff.left <- geom.sub$ELEVATION_M[1] - bank_elev_min
-      diff.right <- geom.sub$ELEVATION_M[length(geom.sub$ELEVATION_M)] - bank_elev_min
-      #if on left bank, change first split to WSE.max.station
+      #if WSE.max.station is on left then WSE.max.station is first value, else it is the last
+      diff.left <- abs(WSE.max.station - geom.sub$station_m[1]) 
+      diff.right <- abs(geom.sub$station_m[length(geom.sub$station_m)] - WSE.max.station)
+      #if on left bank (diff.left < diff.right), change first split to WSE.max.station
       if(diff.left < diff.right){
         split.stations.to.subset[1] <-  WSE.max.station
       }else{
@@ -425,6 +426,7 @@ for(i in 1:length(xs.id)){
             
             #total. shear (hydradius [R] * slope * density water), density water 9806 N/m3
             #overall hydraulic radius (flow area/wetted perim)
+            #note: already removed any negative values for flow area and wetted perim calculation
             hyd.radius.total <- sum(new.slice.geom$flow.area, na.rm=TRUE)/sum(new.slice.geom$wetted.perim, na.rm=TRUE)
             out.rating.all[j, ind.slice.all[4]] <- hyd.radius.total * s * 9806
             
