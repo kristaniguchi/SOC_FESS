@@ -1,6 +1,7 @@
 #Alteration assessment for all stream reaches from LSPC model - updated recalibration LSPC
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
+#Note: 201080 is updated to 201079 - didn't include English trib, Delete 201080 trib file and replace with 201079
 
 #load library
 library("devtools")
@@ -33,6 +34,7 @@ ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecolo
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
+
 #lookuptable to convert subbasin codes for model output subbasin names
 subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
 
@@ -49,9 +51,6 @@ new.subbasinname <- gsub("-", "", new.subbasinname)
 basin_comid_lookup$new.subbasinname <- new.subbasinname
 
 
-
-
-
 ##############################
 ######loop to run through each subbasin, calc mean daily flow, save daily flow
 #Functional flow metric names and labels for plots
@@ -61,9 +60,27 @@ ffm.labels$metric <- ffm.labels$flow_metric
 
 #list of file names to loop through
 fnames <- list.files(curr.dir, pattern = "\\.out$")
-#exclude
-fnames <- fnames[fnames!= "exclude_201040+204010.out"]
-fnames.ref <- list.files(ref.dir, pattern = "\\.out$", full.names=TRUE)
+
+#UPDATE: replace 201080 with 201079 if 2301079 file still exists, rename 201080 original to old file
+if(length(grep("201079", fnames)) > 0 ){
+  #old filenames
+  old.name.curr <- paste0(curr.dir, "201080.out")
+  old.name.ref <- paste0(ref.dir, "201080.out")
+  #rename 201080 to 201080_old for curr and ref
+  file.rename(old.name.curr, paste0(curr.dir, "201080_old.out"))
+  file.rename(old.name.ref, paste0(ref.dir, "201080_old.out"))
+  #rename 201079 to 201080 curr and ref
+  file.rename(paste0(curr.dir, "201079.out"), paste0(curr.dir, "201080.out"))
+  file.rename(paste0(ref.dir, "201079.out"), paste0(ref.dir, "201080.out"))
+}
+
+#update fname list to loop through, do not loop through old 201080
+fnames <- list.files(curr.dir, pattern = "\\.out$")
+ind.old <- grep("old", fnames) 
+#exclude old if old is still in list
+if(ind.old > 0){
+  fnames <- fnames[-ind.old]
+}
 
 #empty df for alteration determination and direction
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
@@ -318,7 +335,6 @@ for (i in 1:length(fnames)){
       sub.ref.lspc.comp <- ref.percentiles.all [as.character(ref.percentiles.all $metric) %in%  as.character(ffm.names.m$flow_metric),]
       sub.ref.statewide.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
       
-      
       #Boxplots for components
       title <- as.character(ffm.names.m$title_component[1]) #component
       subtitle.bp <- paste0("Subbasin ", subbasin)
@@ -328,18 +344,36 @@ for (i in 1:length(fnames)){
       #combine all percentiles dataframes and merge metric label names
       mergeCols <- names(curr.percentiles.all)
       #combine just LSPC ref and current
-      #percentiles.cbind.all <- full_join(sub.curr.comp, sub.ref.lspc.comp, by=mergeCols) %>% 
-        #full_join(sub.ref.statewide.comp, by=mergeCols) %>% 
-        #merge(ffm.labels, by="metric")
-      #old: combine LSPC ref, current and statewide ref for comparison
       percentiles.cbind.all <- full_join(sub.curr.comp, sub.ref.lspc.comp, by=mergeCols) %>% 
-        full_join(sub.ref.statewide.comp, by=mergeCols) %>% 
         merge(ffm.labels, by="metric")
       #save as factor and set levels for source2
-      percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c("LSPC\nCurrent","LSCP\nReference","Statewide\nReference"))
+      percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c("LSPC\nCurrent","LSCP\nReference"))
+      
+      #merge with alteration, make red if altered, 
+      alteration.comparison.df$metric <- alteration.comparison.df$ffm
+      percentiles.cbind.all <-  percentiles.cbind.all %>% 
+        merge(alteration.comparison.df, by="metric")
+      #replace alteration for reference
+      percentiles.cbind.all$alteration.status[percentiles.cbind.all$source2 == "LSCP\nReference"] <- "NA"
+      #save names of alteration status, save as factor
+      percentiles.cbind.all$alteration.status <- factor(percentiles.cbind.all$alteration.status, levels= c("likely_altered", "likely_unaltered","indeterminate", "NA"))
+      #attach colors for each status
+      percentiles.cbind.all$colors <- NA
+      percentiles.cbind.all$colors[percentiles.cbind.all$alteration.status == "likely_altered"] <- "#cb181d"
+      percentiles.cbind.all$colors[percentiles.cbind.all$alteration.status == "likely_unaltered"] <- "#2171b5"
+      percentiles.cbind.all$colors[percentiles.cbind.all$alteration.status == "indeterminate"] <- "#f7f7f7"
+      percentiles.cbind.all$colors[percentiles.cbind.all$alteration.status == "NA"] <- "#bdbdbd"
+      percentiles.cbind.all$colors <- factor(percentiles.cbind.all$colors, levels = c("#cb181d", "#2171b5", "#f7f7f7", "#bdbdbd"))
+      
+      #list of colors and alteration statuses, color current by alteration status
+      colors <- c("#cb181d", "#2171b5", "#f7f7f7", "#bdbdbd")
+      status <- c("Likely Altered", "Likely Unaltered", "Indeterminate", "NA")
+      lookup <- data.frame(cbind(colors, status))
       
       #subset percentiles for component only
       percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
+      #subset colors and status
+      lookup.sub <- lookup[lookup$colors %in% percentiles.cbind.all.sub.m$colors,]
       
       #if peak flow plots, create boxplots in order of increasing magnitude (not based on alphabetical order)
       if(ffm.labels$flow_component[m] == "Peak Flow"){
@@ -356,11 +390,11 @@ for (i in 1:length(fnames)){
           percentiles.cbind.all.sub.m$title_ffm <- factor(as.character(percentiles.cbind.all.sub.m$title_ffm), levels = c(" Frequency (2-year flood)", " Frequency (5-year flood)", " Frequency (10-year flood)"))
         }
         #All years plots
-        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=alteration.status)) +
           geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-          scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
+          scale_fill_manual(name = "Alteration Status", labels = lookup.sub$status, values=lookup.sub$colors) + 
           labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-        print(P)
+        #print(P)
         #save as jpg
         component.2 <- gsub(" ", "_", title)
         plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
@@ -370,11 +404,11 @@ for (i in 1:length(fnames)){
         #fill color based on entire POR LSPC (add colored points), Gage, Reference
         fill<- percentiles.cbind.all.sub.m$source2
         #All years plots
-        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=source2)) +
+        P<- ggplot(percentiles.cbind.all.sub.m, aes(x=source2, ymin = p10, lower = p25, middle = p50, upper = p75, ymax = p90, fill=colors)) +
           geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
-          scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
+          scale_fill_manual(name = "Alteration Status", labels = lookup.sub$status, values=lookup.sub$colors) +
           labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-        print(P)
+        #print(P)
         #save as jpg
         component.2 <- gsub(" ", "_", title)
         plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
@@ -394,24 +428,28 @@ for (i in 1:length(fnames)){
 #Alteration based on flow component:
 #if one metric in component is altered, component is considered altered
 
-#update this later!!!!
-#loop through all dirs 1-18 and combine alteration df with overall df (since started at i 19 in loop above)
-dir.ffm <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200411_Updated_Calibration/WY94-Present/daily/FFMs"
-list <- list.files(dir.ffm, full.names = TRUE)
-for(y in 1:18){
-  path.open.list <- list.files(list[y], full.names = TRUE)
-  ind.file <- grep("_alteration_comparison_lspcref_statewide.csv$", path.open.list)
-  file <- read.csv(path.open.list[ind.file])
+#Only rerun this if you do not want to run entire script above but have already done so previously
+#loop through all dirs 1-20 and combine alteration df with overall df (since started at i 19 in loop above)
+#alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
+#names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
+
+#dir.ffm <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/daily/FFMs/"
+#list <- list.files(dir.ffm, full.names = TRUE)
+
+#for(y in 1:length(list)){
+  #path.open.list <- list.files(list[y], full.names = TRUE)
+  #ind.file <- grep("_alteration_comparison_lspcref_statewide.csv$", path.open.list)
+  #file <- read.csv(path.open.list[ind.file])
   #append to overall df
-  alteration.df.overall <- data.frame(rbind(alteration.df.overall, file))
-}
+  #alteration.df.overall <- data.frame(rbind(alteration.df.overall, file))
+#}
 
 #backup.alteration.df.overall <- alteration.df.overall
 #alteration.df.overall <- backup.alteration.df.overall
 
 
 #alteration directory
-alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/"
+alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/"
 unique.sites <- unique(alteration.df.overall$subbasin.model)
 #join the alteration df with the ffm table
 ffm.labels$ffm <- as.character(ffm.labels$metric)
@@ -426,17 +464,17 @@ alteration.df.overall.join$component_alteration <- alteration.df.overall.join$al
 alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, alteration.df.overall.join$component_alteration)
 alteration.df.overall.join$component_alteration <- gsub("indeterminate", NA, alteration.df.overall.join$component_alteration)
 
+#write overall alteration FFM
+write.csv(alteration.df.overall.join, file=paste0(alteration.dir, "ffm_alteration.df.overall.join.csv"), row.names=FALSE)
+
+
 #synthesis component alteration
 ind.NA <- which(is.na(alteration.df.overall.join$component_alteration))
 component.alteration.subset <- alteration.df.overall.join[-ind.NA,]
-
-#subset to only alteration per ffm
-
-
+#write component alteration df
+write.csv(component.alteration.subset, file=paste0(alteration.dir, "component.alteration.df.overall.join.csv"), row.names=FALSE)
 
 
-#write.csv(alteration.df.overall.join, file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv", row.names=FALSE)
-#write.csv(alteration.df.overall.join, file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/component.alteration.df.overall.join.csv", row.names=FALSE)
 
 
 
