@@ -2,6 +2,8 @@
 #this code will loop through each flow output file from GSFlow, match model code with COMID, and evaluate alteration based on statewide ref model
 #alteration results will be saved as csvs
 
+####update this to include the new FFC API set up
+
 #load library
 library("devtools")
 library("ffcAPIClient")
@@ -44,9 +46,6 @@ for(z in 1:length(subbasin_lookup$Letter)){
 #find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
 new.subbasinname <- gsub("-", "", new.subbasinname)
 basin_comid_lookup$new.subbasinname <- new.subbasinname
-
-
-
 
 ##############################
 ######loop to run through each subbasin, calc mean daily flow, save daily flow
@@ -97,33 +96,20 @@ for (i in 1:length(fnames)){
   #Try catch errors in evaluate alteration, skip iteration
   tryCatch({
     #new FFC api set up
-    ffc <- FFCProcessor$new()  # make a new object we can use to run the commands
+    results.curr <- FFCProcessor$new()  # make a new object we can use to run the commands
     #setup
-    ffc$set_up(timeseries=data.curr,
+    results.curr$set_up(timeseries=data.curr,
                token=mytoken,
                comid = COMID)
     #then run
-    ffc$run()
+    results.curr$run()
     
     #clean FFC old account using old token
     #clean_account(mytoken)
     
-    # then pull metrics out as dataframes
-    ffc$alteration
-    ffc$doh_data
-    ffc$ffc_percentiles
-    ffc$ffc_results
-    ffc$predicted_percentiles
-    ffc$predicted_wyt_percentiles
-    
-    
-    
-    ffc$step_one_functional_flow_results()
-    
-    
     
     #Run data.currframe through FFC online with my own gage data.curr or model data.curr
-    results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken, plot_output_folder = dir.new)
+    #results.curr <- ffcAPIClient::evaluate_alteration(timeseries_df = data.curr, comid = COMID, token = mytoken, plot_output_folder = dir.new)
     #reference percentiles
     ref.percentiles <- results.curr$predicted_percentiles
     ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
@@ -134,7 +120,7 @@ for (i in 1:length(fnames)){
     curr.percentiles.all$source2 <- rep("GSFlow\nCurrent", length(curr.percentiles.all$p10))
     curr.results.ffm.all <- results.curr$ffc_results
     curr.results.ffm.all$type <- "curr"
-    curr.drh.data <- results.curr$drh_data.curr
+    curr.drh.data <- results.curr$doh_data
     #write outputs to dir
     write.csv(ref.percentiles, file=paste0(dir.new,"/ref.percentiles.statewide.csv"), row.names=FALSE)
     write.csv(curr.alteration.all, file=paste0(dir.new,"/curr.alteration.statewide.all.csv"), row.names=FALSE)
@@ -175,7 +161,7 @@ alteration.df.overall[ind.ds,]
 
 
 #alteration directory
-alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/"
+alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/"
 unique.sites <- unique(alteration.df.overall$subbasin.model)
 #join the alteration df with the ffm table
 ffm.labels$ffm <- as.character(ffm.labels$metric)
@@ -183,31 +169,28 @@ alteration.df.overall$ffm <- as.character(alteration.df.overall$ffm)
 unique.ffm <- unique(ffm.labels$ffm)
 #join with ffm labels
 alteration.df.overall.join <- full_join(alteration.df.overall, ffm.labels, by="ffm")
-#write table
-fname.alteration <- paste0(alteration.dir,"ffm_alteration.df.overall.join.SanJuan.csv")
-write.csv(alteration.df.overall.join, file=fname.alteration, row.names=FALSE)
 
 #remove NA first row
 alteration.df.overall.join <- alteration.df.overall.join[2:length(alteration.df.overall.join$COMID),]
+
 #add column for component.alteration
 alteration.df.overall.join$component_alteration <- alteration.df.overall.join$alteration.status
 alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, alteration.df.overall.join$component_alteration)
 alteration.df.overall.join$component_alteration <- gsub("indeterminate", NA, alteration.df.overall.join$component_alteration)
+alteration.df.overall.join$component_alteration <- gsub("not_enough_data", NA, alteration.df.overall.join$component_alteration)
 
-#write table joined with component alteration
-fname.alteration2 <- paste0(alteration.dir,"component.alteration.df.overall.join.SanJuan.csv")
-write.csv(alteration.df.overall.join, file=fname.alteration2, row.names=FALSE)
-
+#write table
+#alteration.df.overall.join <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.csv")
+fname.alteration <- paste0(alteration.dir,"ffm_alteration.df.overall.join.SanJuan.csv")
+write.csv(alteration.df.overall.join, file=fname.alteration, row.names=FALSE)
 
 #synthesis component alteration
 ind.NA <- which(is.na(alteration.df.overall.join$component_alteration))
 component.alteration.subset <- alteration.df.overall.join[-ind.NA,]
 
-#subset to only alteration per ffm
-
-
-
-#write.csv(alteration.df.overall.join, file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/component.alteration.df.overall.join.csv", row.names=FALSE)
+#write table joined with component alteration
+fname.alteration2 <- paste0(alteration.dir,"component.alteration.df.overall.join.SanJuan.csv")
+write.csv(component.alteration.subset, file=fname.alteration2, row.names=FALSE)
 
 
 
