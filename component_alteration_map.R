@@ -543,16 +543,73 @@ for(k in 1:length(uniq.comp)){
 }
 
 
+#####################################################
+#create synthesis map for alteration vs wet, dry, peak
+
+#subset component alteration data to wet, dry, peak
+comp.synthesis <- c("Wet-season base flow", "Peak flow", "Dry-season base flow")
+component.sub <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
+  filter(component_alteration == "likely_altered") %>%
+  group_by(New_Name) %>% 
+  summarise(flow_component = toString(unique(flow_component))) %>% 
+  ungroup()
+
+#save as data.frame
+component.sub.df <- data.frame(component.sub)
+#create new simplified categories
+unique(component.sub.df$flow_component)
+
+#get unaltered basin summary
+component.sub.unaltered <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
+  group_by(New_Name) %>% 
+  summarise(component_alteration = toString(unique(component_alteration))) %>% 
+  ungroup()
+#turn to df
+component.sub.unaltered.df <- data.frame(component.sub.unaltered)
+#check to see if any NA (no alteration)
+unique(component.sub.unaltered.df$component_alteration)
+
+#combine with basins shapefile again
+comp_alt_synth <- component.sub.df %>% 
+  inner_join(basins, by = c('New_Name'))
+comp_alt_synth
+
+#set new flow component alteration synthesis names
+comp_alt_synth$flow_component <- gsub(" base flow", "", comp_alt_synth$flow_component)
+comp_alt_synth$flow_component <- gsub("flow", "Flow", comp_alt_synth$flow_component)
+
+comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Wet-season, Peak Flow, Dry-season"] <- "All"
+comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season, Peak Flow"] <- "All"
+comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season"] <- "Wet-season, Dry-season"
+comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Peak Flow, Dry-season"] <- "Dry-season, Peak Flow"
 
 
+unique(comp_alt_synth$flow_component)
 
+comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
 
+colors <- c("#ca0020", "#fdb863", "#5e3c99", "#a6dba0", "#b2abd2")
+levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
 
+#base map 
+study2 <- ggplot(basins) + 
+  #geom_sf(color = "#969696", fill="#d9d9d9") +
+  geom_sf(color = "#969696", fill="white") +
+  labs(title="Hydrologic Alteration Synthesis", subtitle = "Wet and Dry Season Base-flow, Peak Flow",x ="", y = "")  + 
+  theme(panel.background = element_rect(fill = "white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_line(color = "white", size = 0.8),
+        plot.title = element_text(size=20),
+        plot.subtitle = element_text(size=12),) 
+study2
 
-
-
-
-
+#synthesis map
+syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "#969696", aes(fill=altered_components, geometry = geometry)) +
+  scale_fill_manual(name = "Alterated Components", labels = levels, values=colors) +
+  geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+#print
+print(syn.plot)
 
 
 
