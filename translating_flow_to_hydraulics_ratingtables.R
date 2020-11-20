@@ -6,24 +6,42 @@
 library("tidyverse")
 #install.packages("readr")
 library("readr")
+library("dplyr")
 
 ###UPDATE THIS: directory and files for LSPC model
 #current recalibration update from 201105
-flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/"
+#flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/"
+#current recalibration update with low flow bias corrected subbasins
+flow.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/low.flow.bias.corrected/"
+
+#list.files <- list.files(flow.dir, full.names = TRUE, pattern ="\\.OUT$")
+#subbasins <- list.files(flow.dir, pattern ="\\.OUT$") %>% 
+  #strsplit(split="\\.")
+#subbasins <- sapply(subbasins, `[`, 1)
+
+
 list.files <- list.files(flow.dir, full.names = TRUE, pattern ="\\.out$")
 subbasins <- list.files(flow.dir, pattern ="\\.out$") %>% 
   strsplit(split="\\.")
 subbasins <- sapply(subbasins, `[`, 1)
 
+#remove 201080_old from list
+ind.old <- grep("old", subbasins) 
+#exclude old if old is still in list
+if(length(ind.old) > 0){
+  subbasins <- subbasins[-ind.old]
+}
+
+
 #optional: to run only for missing slope sites, filter list.files and subbasins to only include those that didn't have slope
-missing.slope <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/missing.slope.XSECTID.csv")
+#missing.slope <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/missing.slope.XSECTID.csv")
 #only include LSPC sites
-missing.slope <- missing.slope[missing.slope$Source == "LSPC",]
+#missing.slope <- missing.slope[missing.slope$Source == "LSPC",]
 #find index of missing sites that need to be run
-ind.list.files <- which(subbasins %in% missing.slope$LSPC.ID)
+#ind.list.files <- which(subbasins %in% missing.slope$LSPC.ID)
 #subset to missing sites
-list.files <- list.files[ind.list.files]
-subbasins <- subbasins[ind.list.files]
+#list.files <- list.files[ind.list.files]
+#subbasins <- subbasins[ind.list.files]
 
 
 #directory and files for rating tables
@@ -32,7 +50,10 @@ list.files.rating <- list.files(rating.dir, full.names = TRUE, pattern ="\\.csv$
 
 ###UPDATE THIS: output directory for the hydraulics output
 #current recalibration update from 201105
-output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP_recalibration_update/"
+#output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP_recalibration_update/"
+#current recalibration update with low flow bias
+output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/hydraulic_output_current_LSCP_recalibration_update/low.flow.bias/"
+
 #create directory for outputs
 dir.create(output.dir)
 
@@ -60,10 +81,20 @@ list.files <- list.files[ind.paramsites]
 
 #test index with Aliso
 #i <- grep(201020, list.files)
+#i <- 11
+
 #for(i in 1:length(list.files)){
 for(i in 1:length(list.files)){
   #read in discharge data
-  q.data <- read.table(list.files[i], skip=23)
+  #check to see if bias corrected data, if so skip=0, else skip=23
+  ind.bias <- grep("bias", list.files[i])
+  if(length(ind.bias)>0){
+    skip = 1
+  }else{
+    skip = 23
+  }
+  #read in discharge data
+  q.data <- read.table(list.files[i], skip=skip)
   names(q.data) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "av.depth", "av.vel","flow.cfs")
   #format date
   #update to date.time since hourly data
