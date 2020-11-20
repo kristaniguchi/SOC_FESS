@@ -1,16 +1,47 @@
 #Component alteration synthesis summary table
   #create summary table for component alteration based on metric alteration script
+#combine with San Juan data
 
 library("tidyverse")
 library("ggplot2")
+library("dplyr")
 
 
 
 #read in alteration summary table
-data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv")
+#from Aliso
+data1 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.csv")
+data1$subbasin.model <- as.character(data1$subbasin.model)
+#from San Juan
+data2 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.csv")
+data2$subbasin.model <- as.character(data2$subbasin.model)
+data2$subbasin <- as.character(data2$subbasin)
+##############################
+#lookuptable to convert subbasin codes for model output subbasin names
+subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
 
+#convert basin orig name to outputfile name (model subbasin name) 
+new.subbasinname <- data2$subbasin.model
+subbasin.old <- data2$subbasin.model
+
+for(z in 1:length(subbasin_lookup$Letter)){
+  new.subbasinname <- gsub(subbasin_lookup$Letter[z], subbasin_lookup$Number[z], new.subbasinname)
+}
+
+#find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
+new.subbasinname <- gsub("-", "", new.subbasinname)
+data2$subbasin.model <- new.subbasinname
+data2$subbasin <- subbasin.old
+
+#merge into one df
+data <- full_join(data1, data2)
+
+#write combine ffm alteration
+write.csv(data, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.Aliso.csv", row.names = FALSE)
+
+##############################################################
 #loop to summarize alteration component
-basins <- unique(data$subbasin_model)
+basins <- unique(data$subbasin.model)
 
 #create empty df
 comp_summary <- data.frame(matrix(nrow=1, ncol=8))
@@ -18,7 +49,7 @@ names(comp_summary) <- c("COMID", "subbasin_model", "subbasin", "flow_component"
 
 for(i in 1:length(basins)){
   #subset to basin i
-  sub <- data[data$subbasin_model == basins[i],]
+  sub <- data[data$subbasin.model == basins[i],]
 
   #############
   #loop through each unique component
@@ -49,7 +80,7 @@ for(i in 1:length(basins)){
     }
     
     #save row for flow component in temp df
-    row <- c(comp$COMID[1], as.character(comp$subbasin_model[1]), as.character(comp$subbasin[1]), as.character(component), comp_alt, n_ffm_altered, flow_metrics_altered, flow_char_altered)
+    row <- c(comp$COMID[1], as.character(comp$subbasin.model[1]), as.character(comp$subbasin[1]), as.character(component), comp_alt, n_ffm_altered, flow_metrics_altered, flow_char_altered)
     temp_df[j,] <- row
   }
   
@@ -60,13 +91,13 @@ for(i in 1:length(basins)){
 #remove first row of NA
 comp_summary2 <- comp_summary[2:length(comp_summary$COMID),]
 
-
-#write.csv(comp_summary2, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/summary_component_alteration.csv", row.names = FALSE)
-
-
+#write comp summary df
+write.csv(comp_summary2, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/summary_component_alteration.csv", row.names = FALSE)
 
 
-########
+
+
+#######################
 #create heatmap of alteration statuses and number of subbasins considered likely altered
 #read in alteration summary table
 data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv")
