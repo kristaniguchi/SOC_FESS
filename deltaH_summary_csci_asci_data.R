@@ -1,4 +1,4 @@
-#synthesize delta H values (min, median, max, mean delta H for each metric)
+#synthesize delta H values (min, median, max, mean delta H for each metric) for southern CA data
 
 
 #read in delta H data
@@ -31,7 +31,7 @@ sites.deltaH <- unique(deltaH$site)
 #output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs/deltaH_summary_all_badyrs.csv"
 #no zero flow days, changed to low value and bad years replace with NA
 #OLD: output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/deltaH_summary_all_badyrs_nonzero.csv"
-output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_updated/deltaH_summary_badyrs_nonzero_updated.csv"
+output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH_updated/deltaH_summary_badyrs_nonzero_updated.csv"
 
 #############################################################
 
@@ -175,7 +175,8 @@ max(deltaH.sd$current_value[deltaH.sd$flow_metric == "DS_Dur_WS"]) #looks like t
 
 #subset deltaH values to only include years properly modeled by Ashmita
 #read in years to subset for the 
-subset.yrs <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/yearstosubsetflow_current_ashmitamodels.csv")
+#subset.yrs <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/yearstosubsetflow_current_ashmitamodels.csv")
+subset.yrs <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/yearstosubsetflow_current_ashmitamodels.csv")
 #create site.year vector
 subset.yrs$site.year <- paste0(subset.yrs$Site, "_", as.character(subset.yrs$WaterYear))
 subset.yrs$site <- subset.yrs$Site
