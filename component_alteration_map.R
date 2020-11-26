@@ -1,10 +1,10 @@
 #Flow component alteration map
 
-install.packages("ggsn")
-install.packages("ggmap")
-install.packages("mapview")
-install.packages("geosphere")
-install.packages("rgeos")
+#install.packages("ggsn")
+#install.packages("ggmap")
+#install.packages("mapview")
+#install.packages("geosphere")
+#install.packages("rgeos")
   #to install spDataLarge
 #devtools::install_github("robinlovelace/geocompr")
 library(spData)
@@ -433,6 +433,13 @@ basins4$alteration.status.new <- gsub("Indeterminate High", "Indeterminate", bas
 basins4$alteration.status.new <- gsub("Indeterminate Low", "Indeterminate", basins4$alteration.status.new)
 unique(basins4$alteration.status.new)
 
+#for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
+basins4$alteration.status.new[basins4.sub$New_Name == "L02-040"] <- "NA"
+basins4$alteration.status.new[basins4.sub$New_Name == "L02-041"] <- "NA"
+basins4$component_alteration[basins4.sub$New_Name == "L02-040"] <- "NA"
+basins4$component_alteration[basins4.sub$New_Name == "L02-041"] <- "NA"
+
+
 #list of colors and alteration statuses, color current by alteration status
 colors <- c("#cb181d", "#fdbe85", "#2171b5", "#f7f7f7", "#d9d9d9")
 alteration.status.new <- c("Likely Altered High", "Likely Altered Low", "Likely Unaltered", "Indeterminate", "NA")
@@ -500,8 +507,8 @@ for(k in 1:length(uniq.comp)){
   #subset colors and status
   lookup.sub <- lookup[lookup$alteration.status.new %in% basins4.sub$alteration.status.new,]
   #save as factor
-  lookup.sub$alteration.status.new <- factor(lookup.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
-  basins4.sub$alteration.status.new <- factor(basins4.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
+  lookup.sub$alteration.status.new <- factor(lookup.sub$alteration.status.new, levels = unique(lookup.sub$alteration.status.new))
+  basins4.sub$alteration.status.new <- factor(basins4.sub$alteration.status.new, levels = unique(lookup.sub$alteration.status.new))
   #title metric needs to be sorted, factor
   basins4.sub$title_ffm <- factor(basins4.sub$title_ffm, levels = unique(basins4.sub$title_ffm))
   
@@ -603,6 +610,12 @@ study2 <- ggplot(basins) +
         plot.title = element_text(size=20),
         plot.subtitle = element_text(size=12),) 
 study2
+
+#make sure ref subbasins have NA
+#for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
+comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-040"] <- NA
+comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-041"] <- NA
+
 
 #synthesis map
 syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "#969696", aes(fill=altered_components, geometry = geometry)) +
