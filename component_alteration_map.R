@@ -48,10 +48,6 @@ basins2 <- basins %>%
   inner_join(comp_alt, by = c('New_Name'))
 basins2
 
-#basins2save <- basins2
-
-
-
 #reach polylines
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
 #reaches <- st_read('L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/New_Subbasins_forSCCWRP/reaches_forSCCWRP.shp', quiet = T)
@@ -61,6 +57,9 @@ reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
 comp_alt <- comp_alt %>% 
   inner_join(basins, by = c('New_Name'))
 comp_alt
+
+#model source LSPC or Wildermuth
+source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
 
 
 #find centroids of subbasins
@@ -404,12 +403,17 @@ study + geom_sf(data = basins3, color = "red", fill="white", size = 1.2) +
 geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 
-
-#test FFM METRIC alteration maps
+########################################################
+# FFM METRIC alteration maps
 #subbasin polygons
 data$New_Name <- data$subbasin
 basins4 <- basins %>% 
   inner_join(data, by = c('New_Name'))
+basins4
+
+#inner join with model source
+basins4 <- basins4 %>% 
+  inner_join(source, by = c('New_Name'))
 basins4
 
 #replace alteration category names
@@ -434,10 +438,10 @@ basins4$alteration.status.new <- gsub("Indeterminate Low", "Indeterminate", basi
 unique(basins4$alteration.status.new)
 
 #for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
-basins4$alteration.status.new[basins4.sub$New_Name == "L02-040"] <- "NA"
-basins4$alteration.status.new[basins4.sub$New_Name == "L02-041"] <- "NA"
-basins4$component_alteration[basins4.sub$New_Name == "L02-040"] <- "NA"
-basins4$component_alteration[basins4.sub$New_Name == "L02-041"] <- "NA"
+basins4$alteration.status.new[basins4$New_Name == "L02-040"] <- "NA"
+basins4$alteration.status.new[basins4$New_Name == "L02-041"] <- "NA"
+basins4$component_alteration[basins4$New_Name == "L02-040"] <- "NA"
+basins4$component_alteration[basins4$New_Name == "L02-041"] <- "NA"
 
 
 #list of colors and alteration statuses, color current by alteration status
@@ -484,8 +488,14 @@ for(j in 1:length(unique.ffm)){
   alt.plot <- study2 + geom_sf(data = basins4.sub, color= "#969696", aes(fill=alteration.status.new)) +
     scale_fill_manual(name = "Alteration Status", labels = lookup.sub$alteration.status.new, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
+  #add in model source
+  alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
   #print
-  print(alt.plot)
+ # print(alt.plot)
   
   #write plot
   #save as jpg
@@ -539,8 +549,14 @@ for(k in 1:length(uniq.comp)){
     facet_wrap(~ title_ffm, ncol = col.num) +
     theme(strip.text.x = element_text(size = font.size)) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
+  #add in model source
+  alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
   #print
-  print(alt.plot)
+  #print(alt.plot)
   
   #write plot
   #save as jpg
@@ -578,7 +594,8 @@ unique(component.sub.unaltered.df$component_alteration)
 
 #combine with basins shapefile again
 comp_alt_synth <- component.sub.df %>% 
-  inner_join(basins, by = c('New_Name'))
+  inner_join(basins, by = c('New_Name')) %>% 
+  inner_join(source, by = c('New_Name'))
 comp_alt_synth
 
 #set new flow component alteration synthesis names
@@ -621,8 +638,15 @@ comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-041"] <- NA
 syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "#969696", aes(fill=altered_components, geometry = geometry)) +
   scale_fill_manual(name = "Alterated Components", labels = levels, values=colors) +
   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+
+#add in model source
+syn.plot2 <- syn.plot + geom_sf(data = comp_alt_synth, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+  scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+  geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+
+
 #print
-print(syn.plot)
+print(syn.plot2)
 
 
 
