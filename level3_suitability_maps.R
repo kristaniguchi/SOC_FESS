@@ -30,9 +30,9 @@ library(rgeos)
 level3.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier3_analysis/"
 #UPDATE BASED ON OPTION AND UPDATE OUTDIRECTORY BASED ON SAME OPTION
 #option 1
-#fname <- paste0(level3.dir, "All_species_suit_class_wide_option1_med_prob_longer_time.csv") #update to directory
+fname <- paste0(level3.dir, "All_species_suit_class_wide_option1_med_prob_longer_time.csv") #update to directory
 #option 2
-fname <- paste0(level3.dir, "All_species_suit_class_wide_option2_strict_prob_shorter_time.csv") #update to directory
+#fname <- paste0(level3.dir, "All_species_suit_class_wide_option2_strict_prob_shorter_time.csv") #update to directory
 
 #read in suitability data 
 suit_data <- read.csv(fname) %>% 
@@ -40,8 +40,8 @@ suit_data <- read.csv(fname) %>%
 
 #UPDATE BASED ON OPTION, match with file name option
 #set output directory
-#out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option1_med_prob_longer_time/")
-out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option2_strict_prob_shorter_time/")
+out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option1_med_prob_longer_time/")
+#out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option2_strict_prob_shorter_time/")
 
 #read in shapefiles subbasins and reaches
 #subbasin polygon shapefile
@@ -49,6 +49,12 @@ basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
 
 #reach polylines
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
+
+#model source LSPC or Wildermuth
+source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
+
+
+
 
 
 ############################################################
@@ -65,6 +71,11 @@ colors <- c("#0571b0", "#ca0020", "white")
 suitability <- c("High",  "Low", NA)
 categories <- c("Yes", "No", "Not evaluated")
 lookup <- data.frame(cbind(colors, suitability, categories))
+
+source2 <- suit_data %>% 
+  inner_join(basins, by = c('New_Name')) %>% 
+  inner_join(source, by = c('New_Name'))
+
 
 
 for(i in species.cols){
@@ -108,12 +119,18 @@ for(i in species.cols){
   syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=suitability, geometry = geometry)) +
     scale_fill_manual(name = "Flow conditions suitable?", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
+  #add in model source
+  syn.plot2 <- syn.plot + geom_sf(data = source2, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
   #print
-  print(syn.plot)
+  print(syn.plot2)
   
   #write plot
   out.filename <- paste0(out.dir, col.name, "_suitability_map.jpg")
-  ggsave(syn.plot, file = out.filename, dpi=300, height=4, width=6)
+  ggsave(syn.plot2, file = out.filename, dpi=300, height=4, width=6)
   
 }
 

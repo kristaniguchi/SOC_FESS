@@ -48,6 +48,9 @@ basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
 #reach polylines
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
 
+#model source LSPC or Wildermuth
+source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
+
 
 ############################################################
 #post-process Aliso suitability data
@@ -285,6 +288,11 @@ alteration <- c("Altered",  "Unaltered", NA)
 categories <- c("Likely Altered", "Likely Unaltered", "Not evaluated")
 lookup <- data.frame(cbind(colors, alteration, categories))
 
+#inner join with model source
+subset.50pct.time <- subset.50pct.time %>% 
+  inner_join(source, by = c('New_Name'))
+subset.50pct.time
+
 
 for(i in 7:9){
   #title
@@ -349,8 +357,14 @@ for(i in 7:9){
       syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=`Alteration - Bio`, geometry = geometry)) +
         scale_fill_manual(name = "Alteration - Bio", labels = lookup.sub$categories, values=lookup.sub$colors) +
         geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+      
+      #add in model source
+      syn.plot2 <- syn.plot + geom_sf(data = subset.join, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+        scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+        geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+      
       #print
-      print(syn.plot)
+      print(syn.plot2)
       
       #write plot
       #out.filename <- paste0(out.dir, col.name, "_suitability_map.jpg")
@@ -382,6 +396,11 @@ suitability <- c("High",  "Low", NA)
 categories <- c("Yes", "No", "Not evaluated")
 lookup <- data.frame(cbind(colors, suitability, categories))
 
+#inner join with model source
+subset.50pct.time <- subset.50pct.time %>% 
+  inner_join(source, by = c('New_Name'))
+subset.50pct.time
+
 
 for(i in species.cols){
   #title
@@ -390,7 +409,7 @@ for(i in species.cols){
   title <- gsub("\\.", "\\/", title)
   
   #subset 
-  subset <- suit_data[,c(2,i)]
+  subset <- suit_data2[,c(2,i)]
   names(subset)[2] <- "suitability"
   
   #merge with basins
@@ -424,12 +443,18 @@ for(i in species.cols){
   syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=suitability, geometry = geometry)) +
     scale_fill_manual(name = "Flow conditions suitable?", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
+  #add in model source
+  syn.plot2 <- syn.plot + geom_sf(data = subset.join, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
   #print
-  print(syn.plot)
+  print(syn.plot2)
   
   #write plot
   out.filename <- paste0(out.dir, col.name, "_suitability_map.jpg")
-  ggsave(syn.plot, file = out.filename, dpi=300, height=4, width=6)
+  ggsave(syn.plot2, file = out.filename, dpi=300, height=4, width=6)
   
 }
 

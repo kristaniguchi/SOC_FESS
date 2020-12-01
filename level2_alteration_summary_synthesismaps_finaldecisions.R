@@ -60,6 +60,9 @@ basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
 #reach polylines
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
 
+#model source LSPC or Wildermuth
+source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
+
 
 ############################################################
 #post-process Aliso suitability data
@@ -214,7 +217,13 @@ lookup <- data.frame(cbind(colors, priority, categories))
 
 #merge with basins
 subset.join <- synthesis.summary %>% 
-  full_join(basins, by = c('New_Name'))
+  full_join(basins, by = c('New_Name')) %>% 
+  inner_join(source, by = c('New_Name'))
+
+source2 <- synthesis.summary %>% 
+  inner_join(basins, by = c('New_Name')) %>% 
+  inner_join(source, by = c('New_Name'))
+
 
   #plot
   #Set up base map 
@@ -238,9 +247,17 @@ subset.join <- synthesis.summary %>%
   syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=synthesis_alteration, geometry = geometry)) +
     scale_fill_manual(name = "Priority", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
+  #add in model source
+  syn.plot2 <- syn.plot + geom_sf(data = source2, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  
   #print
   print(syn.plot)
+  print(syn.plot2)
   
+
   #write plot
   out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_Aliso_SanJuan.jpg")
   ggsave(syn.plot, file = out.filename, dpi=300, height=4, width=6)
