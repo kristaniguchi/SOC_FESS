@@ -38,9 +38,7 @@ subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/So
 new.subbasinname <- basin_comid_lookup$Subbasin
 
 for(z in 1:length(subbasin_lookup$Letter)){
-  
   new.subbasinname <- gsub(subbasin_lookup$Letter[z], subbasin_lookup$Number[z], new.subbasinname)
-  
 }
 
 #find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
