@@ -228,7 +228,7 @@ source2 <- synthesis.summary %>%
   #plot
   #Set up base map 
   study <- ggplot(basins) + 
-    geom_sf(color = "#969696", fill="white") +
+    geom_sf(color = "lightgrey", fill="white") +
     #labs(x ="", y = "")  + 
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
@@ -244,13 +244,13 @@ source2 <- synthesis.summary %>%
   subset.join$synthesis_alteration <- factor(subset.join$synthesis_alteration, levels = unique(lookup.sub$priority))
   
   #synthesis map
-  syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=synthesis_alteration, geometry = geometry)) +
+  syn.plot <- study + geom_sf(data = subset.join, color= "lightgrey", aes(fill=synthesis_alteration, geometry = geometry)) +
     scale_fill_manual(name = "Priority", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #add in model source
   syn.plot2 <- syn.plot + geom_sf(data = source2, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print
@@ -260,7 +260,7 @@ source2 <- synthesis.summary %>%
 
   #write plot
   out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_Aliso_SanJuan.jpg")
-  ggsave(syn.plot, file = out.filename, dpi=300, height=4, width=6)
+  ggsave(syn.plot2, file = out.filename, dpi=300, height=4, width=6)
   
 
 
@@ -336,7 +336,7 @@ for(i in 6){
       #plot
       #Set up base map 
       study <- ggplot(basins) + 
-        geom_sf(color = "#969696", fill="white") +
+        geom_sf(color = "lightgrey", fill="white") +
         labs(title=title, subtitle = subtitle, x ="", y = "")  + 
         theme(panel.background = element_rect(fill = "white"),
               axis.ticks = element_blank(),
@@ -354,7 +354,7 @@ for(i in 6){
       
       
       #synthesis map
-      syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=`Alteration - Bio`, geometry = geometry)) +
+      syn.plot <- study + geom_sf(data = subset.join, color= "lightgrey", aes(fill=`Alteration - Bio`, geometry = geometry)) +
         scale_fill_manual(name = "Alteration - Bio", labels = lookup.sub$categories, values=lookup.sub$colors) +
         geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
       #print

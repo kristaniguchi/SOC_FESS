@@ -30,9 +30,9 @@ library(rgeos)
 level3.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier3_analysis/"
 #UPDATE BASED ON OPTION AND UPDATE OUTDIRECTORY BASED ON SAME OPTION
 #option 1
-fname <- paste0(level3.dir, "All_species_suit_class_wide_option1_med_prob_longer_time.csv") #update to directory
+#fname <- paste0(level3.dir, "All_species_suit_class_wide_option1_med_prob_longer_time.csv") #update to directory
 #option 2
-#fname <- paste0(level3.dir, "All_species_suit_class_wide_option2_strict_prob_shorter_time.csv") #update to directory
+fname <- paste0(level3.dir, "All_species_suit_class_wide_option2_strict_prob_shorter_time.csv") #update to directory
 
 #read in suitability data 
 suit_data <- read.csv(fname) %>% 
@@ -40,8 +40,10 @@ suit_data <- read.csv(fname) %>%
 
 #UPDATE BASED ON OPTION, match with file name option
 #set output directory
-out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option1_med_prob_longer_time/")
-#out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option2_strict_prob_shorter_time/")
+#option1:
+#out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option1_med_prob_longer_time/")
+#option2:
+out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option2_strict_prob_shorter_time/")
 
 #read in shapefiles subbasins and reaches
 #subbasin polygon shapefile
@@ -98,7 +100,7 @@ for(i in species.cols){
   
   #Set up base map 
   study <- ggplot(basins) + 
-    geom_sf(color = "#969696", fill="white") +
+    geom_sf(color = "lightgrey", fill="white") +
     labs(title=title, x ="", y = "")  + 
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
@@ -116,13 +118,13 @@ for(i in species.cols){
   
   
   #synthesis map
-  syn.plot <- study + geom_sf(data = subset.join, color= "#969696", aes(fill=suitability, geometry = geometry)) +
+  syn.plot <- study + geom_sf(data = subset.join, color= "lightgrey", aes(fill=suitability, geometry = geometry)) +
     scale_fill_manual(name = "Flow conditions suitable?", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #add in model source
   syn.plot2 <- syn.plot + geom_sf(data = source2, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print

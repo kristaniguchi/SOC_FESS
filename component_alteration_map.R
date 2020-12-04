@@ -491,7 +491,7 @@ for(j in 1:length(unique.ffm)){
   
   #add in model source
   alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print
@@ -552,7 +552,7 @@ for(k in 1:length(uniq.comp)){
   
   #add in model source
   alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print
@@ -617,8 +617,8 @@ levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-seaso
 
 #base map 
 study2 <- ggplot(basins) + 
-  #geom_sf(color = "#969696", fill="#d9d9d9") +
-  geom_sf(color = "#969696", fill="white") +
+  geom_sf(color = "lightgrey", fill="white") +
+  #geom_sf(color = "#969696", fill="white") +
   labs(title="Hydrologic Alteration Synthesis", subtitle = "Wet and Dry Season Base-flow, Peak Flow",x ="", y = "")  + 
   theme(panel.background = element_rect(fill = "white"),
         axis.ticks = element_blank(),
@@ -635,13 +635,13 @@ comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-041"] <- NA
 
 
 #synthesis map
-syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "#969696", aes(fill=altered_components, geometry = geometry)) +
+syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "gray89", aes(fill=altered_components, geometry = geometry)) +
   scale_fill_manual(name = "Alterated Components", labels = levels, values=colors) +
   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 #add in model source
 syn.plot2 <- syn.plot + geom_sf(data = comp_alt_synth, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
-  scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "tan")) +
+  scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 
