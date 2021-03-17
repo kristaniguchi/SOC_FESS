@@ -15,32 +15,33 @@ library("tidyverse")
 
 #my token for FFC API Client
 mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
+#set token
+set_token(mytoken)
 
 #directory of LSPC future and historical model output results
-hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/Historical_WY75-05/"
-future.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/200715_Climate_Scenario/RCP85_WY30-60/"
+hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Climate_Scenario/Historical_WY75-05/"
+future.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Climate_Scenario/RCP85_WY30-60/"
 #within each directory, need to go into subdirs for each GCM
 hist.subdir <- list.files(hist.dir, full.names = TRUE)
 future.subdir <- list.files(future.dir, full.names = TRUE)
 #list of gcm names
 gcms <- list.files(future.dir)
 #FFM output dir for future climate scenario analysis
-output.dir <- "W:/SOC_FlowEcologyStudy/FutureClimateScenarios"
+output.dir <- "D:/SOC_FlowEcologyStudy/FutureClimateScenarios"
 
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
+
 #lookuptable to convert subbasin codes for model output subbasin names
-subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
+subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/Old_Runs/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
 
 ##############################
 #convert basin orig name to outputfile name (model subbasin name)
 new.subbasinname <- basin_comid_lookup$Subbasin
 
 for(z in 1:length(subbasin_lookup$Letter)){
-  
   new.subbasinname <- gsub(subbasin_lookup$Letter[z], subbasin_lookup$Number[z], new.subbasinname)
-  
 }
 
 #find and replace - in new.subbasinname with nothing, make consistent with file name
@@ -96,7 +97,9 @@ for(k in 1:length(future.subdir)){
     names(future) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow","depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
     date <- paste(future$month, future$day, future$year, sep="/")
-    future$date <- date
+    #format date mm/dd/yyyy
+    date2 <- as.POSIXct(date, format = "%m/%d/%Y")
+    future$date <- format(date2, "%m/%d/%Y")
     #format q to be numeric
     future$flow.cfs <- as.numeric(as.character(future$flow.cfs))
     ################
@@ -110,8 +113,16 @@ for(k in 1:length(future.subdir)){
     #create new directory to save ffm outputs
     dir.new <- paste0(output.dir,"/FFMs/",subbasin.model)
     dir.create(dir.new)
-    #Run data.futureframe through FFC online with my own gage data.future or model data.future
-    results.future <- ffcAPIClient::evaluate_alteration(timeseries_df = data.future, comid = COMID, token = mytoken)
+
+    #new FFC api set up
+    results.future <- FFCProcessor$new()  # make a new object we can use to run the commands
+    #setup
+    results.future$set_up(timeseries=data.future,
+                        token=mytoken,
+                        comid = COMID)
+    #then run
+    results.future$run()
+    
     #reference percentiles
     ref.percentiles <- results.future$predicted_percentiles
     ref.percentiles$source2 <- rep("Statewide\nReference", length(ref.percentiles$p10))
@@ -139,21 +150,30 @@ for(k in 1:length(future.subdir)){
     historical <- read.table(paste0(hist.subdir[k],"/", fnames[i]), skip=skip)
     names(historical) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow", "depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
-    date2 <- paste(historical$month, historical$day, historical$year, sep="/")
-    historical$date <- date2
+    date3 <- paste(historical$month, historical$day, historical$year, sep="/")
+    #format date mm/dd/yyyy
+    date4 <- as.POSIXct(date3, format = "%m/%d/%Y")
+    historical$date <- format(date4, "%m/%d/%Y")
     #format q to be numeric
     historical$flow.cfs <- as.numeric(as.character(historical$flow.cfs))
 
     #create new data frame with date and mean daily flow to go into FFC
-    data.historical <- data.frame(cbind(date2, historical$flow.cfs))
+    data.historical <- data.frame(cbind(historical$date, historical$flow.cfs))
     names(data.historical) <- c("date", "flow")
     
     ################
     #calc FFMs and alteration for historical data
     #save output in same directory 
 
-    #Run dataframe through FFC online with my own gage data or model data
-    results.historical <- ffcAPIClient::evaluate_alteration(timeseries_df = data.historical, comid = COMID, token = mytoken)
+    #new FFC api set up
+    results.historical <- FFCProcessor$new()  # make a new object we can use to run the commands
+    #setup
+    results.historical$set_up(timeseries=data.historical,
+                          token=mytoken,
+                          comid = COMID)
+    #then run
+    results.historical$run()
+    
     #save output df
     historical.alteration.all <- results.historical$alteration #using statewide percentiles
     historical.percentiles.all <- results.historical$ffc_percentiles
