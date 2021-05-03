@@ -10,6 +10,8 @@
   #changed all zero flow days to very low value 0.00001, ID all bad years (no wet season timing), replaced with NA and ran ffc
   #OLD: deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/FFMs_deltaH_all_badyrs_nonzero_class.csv")
   deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_updated/deltaH_badyrs_nonzero_updated.csv")
+
+
   #round deltaH to 0.01
 deltaH$deltaH <- round(deltaH$deltaH, digits = 4)
 deltaH$water_year_type <- as.character(deltaH$water_year_type)
