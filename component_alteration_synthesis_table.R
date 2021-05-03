@@ -12,32 +12,40 @@ library("dplyr")
 #from Aliso
 data1 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.csv")
 data1$subbasin.model <- as.character(data1$subbasin.model)
-#from San Juan
-data2 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.csv")
+#from Oso and other watersheds
+data2 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Oso_SmallCreeks/ffm_alteration.df.overall.join.csv")
 data2$subbasin.model <- as.character(data2$subbasin.model)
-data2$subbasin <- as.character(data2$subbasin)
+
+#from San Juan - Exclude for now, will add in later
+#data3 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.csv")
+#data3$subbasin.model <- as.character(data2$subbasin.model)
+#data3$subbasin <- as.character(data2$subbasin)
+
+#alteration directory
+alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
+
 ##############################
 #lookuptable to convert subbasin codes for model output subbasin names
 subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
 
 #convert basin orig name to outputfile name (model subbasin name) 
-new.subbasinname <- data2$subbasin.model
-subbasin.old <- data2$subbasin.model
+new.subbasinname <- data3$subbasin.model
+subbasin.old <- data3$subbasin.model
 
 for(z in 1:length(subbasin_lookup$Letter)){
   new.subbasinname <- gsub(subbasin_lookup$Letter[z], subbasin_lookup$Number[z], new.subbasinname)
 }
 
-#find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
+#for wildermuth outputs: find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
 new.subbasinname <- gsub("-", "", new.subbasinname)
-data2$subbasin.model <- new.subbasinname
-data2$subbasin <- subbasin.old
+data3$subbasin.model <- new.subbasinname
+data3$subbasin <- subbasin.old
 
-#merge into one df
+#merge into one df #####update when San Juan data3 is ready 
 data <- full_join(data1, data2)
 
 #write combine ffm alteration
-write.csv(data, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.Aliso.csv", row.names = FALSE)
+write.csv(data, file = paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"), row.names = FALSE)
 
 ##############################################################
 #loop to summarize alteration component
@@ -92,7 +100,7 @@ for(i in 1:length(basins)){
 comp_summary2 <- comp_summary[2:length(comp_summary$COMID),]
 
 #write comp summary df
-write.csv(comp_summary2, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/summary_component_alteration.csv", row.names = FALSE)
+write.csv(comp_summary2, file = paste0(alteration.dir, "summary_component_alteration.csv"), row.names = FALSE)
 
 
 
@@ -100,11 +108,11 @@ write.csv(comp_summary2, file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosynte
 #######################
 #create heatmap of alteration statuses and number of subbasins considered likely altered
 #read in alteration summary table
-data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/ffm_alteration.df.overall.join.csv")
-
+data <- read.csv(file=paste0(alteration.dir, "/ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"))
+names(data)
 
 #summary table with number of subbasins that are in each alteration category for each ffm
-ffm_summary <- data.frame(aggregate(data, by = data[c('ffm','alteration_status', 'flow_component')], length))
+ffm_summary <- data.frame(aggregate(data, by = data[c('ffm','alteration.status', 'flow_component')], length))
 
 #subset to likley altered only
 #ffm_summary_altered <- ffm_summary[ffm_summary$alteration_status == "likely_altered",]
@@ -113,10 +121,10 @@ ffm_summary <- data.frame(aggregate(data, by = data[c('ffm','alteration_status',
 
 #histogram of alteartion statuses
 #add in facet wrap to show the different elements
-ffm_summary$alteration_status <- factor(ffm_summary$alteration_status, levels=c("likely_altered", "likely_unaltered", "indeterminant"))
+ffm_summary$alteration.status <- factor(ffm_summary$alteration.status, levels=c("likely_altered", "likely_unaltered", "indeterminant"))
 
 g <- ggplot(ffm_summary) +
-  geom_bar(color = "black", aes(x= ffm, y =  subbasin, fill = alteration_status), stat = "identity", position = position_fill(reverse = FALSE), width = 0.7) +
+  geom_bar(color = "black", aes(x= ffm, y =  subbasin, fill = alteration.status), stat = "identity", position = position_fill(reverse = FALSE), width = 0.7) +
   ggtitle("Flow Metric Alteration Status") +
   guides(fill = guide_legend(reverse = FALSE)) +
   xlab("Functional Flow Metrics") + ylab("Proportion of Subbasins") +
@@ -126,5 +134,5 @@ g <- ggplot(ffm_summary) +
 
 g
 
-ggsave(g, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/flowmetricalteration_histogram.jpg", dpi=300, height=5, width=13)
-ggsave(sub1, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
+#ggsave(g, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/flowmetricalteration_histogram.jpg", dpi=300, height=5, width=13)
+#ggsave(sub1, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
