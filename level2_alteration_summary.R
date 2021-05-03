@@ -1,4 +1,5 @@
 #### Level 2 - alteration summary based on various thresholds
+#Update: remove wildermuth
 
 #install.packages("ggsn")
 #install.packages("ggmap")
@@ -18,6 +19,7 @@ library(readxl)
 library(sf)
 library(ggsn)
 library(ggmap)
+library(ggspatial)    
 library(mapview)
 library(spData)      
 library(spDataLarge)
@@ -28,7 +30,9 @@ library(rgeos)
 #load in data
 #species suitability data
 level2.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/"
-fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed.csv") #update to directory
+fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed_aliso_oso_small_creeks.csv") #updated file with Oso and small creeks
+#fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed.csv") #update to directory
+
 
 #read in suitability data 
 suit_data <- read.csv(fname)
@@ -82,9 +86,9 @@ suit_data2 <- suit_data %>%
 #####post process to get overall alteration
 
 ####################################
-#if >25% time unsuitable, class it as altered
-suit_data2$alteration_25pct_time[suit_data2$Unsuitable > 25] <- "Altered"
-suit_data2$alteration_25pct_time[suit_data2$Unsuitable <= 25] <- "Unaltered"
+#if >25% time altered, class it as altered
+suit_data2$alteration_25pct_time[suit_data2$Altered > 25] <- "Altered"
+suit_data2$alteration_25pct_time[suit_data2$Altered <= 25] <- "Unaltered"
 
 #### if 1 metric is altered, then all altered
 #aggregate site, Biol, Threshold, alteration_25pct_time
@@ -115,17 +119,18 @@ subset.25pct.time$overall.altered.3metric[which(subset.25pct.time$alteration_25p
 subset.25pct.time$overall.altered.3metric[which(subset.25pct.time$alteration_25pct_time == "Unaltered" & subset.25pct.time$n > 0)] <- "Unaltered"
 
 #save csv
-file.name <- paste0(level2.dir, "summary.25pct.time.altered.csv")
+file.name <- paste0(level2.dir, "summary.25pct.time.altered_aliso_oso_smallcks.csv")
 write.csv(subset.25pct.time, file=file.name, row.names = FALSE)
 
 #summarize overall alteration
+site.length <- length(unique(subset.25pct.time$New_Name))
 #1 metric
 subset.25pct.time.summary1 <- subset.25pct.time %>% 
   group_by(Biol, Threshold, overall.altered.1metric) %>% 
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.1metric = 100*n/19) 
+  mutate(pct.1metric = 100*n/site.length) 
 
 #2 metric
 subset.25pct.time.summary2 <- subset.25pct.time %>% 
@@ -133,7 +138,7 @@ subset.25pct.time.summary2 <- subset.25pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.2metric = 100*n/19) 
+  mutate(pct.2metric = 100*n/site.length) 
 
 #3 metric
 subset.25pct.time.summary3 <- subset.25pct.time %>% 
@@ -141,14 +146,14 @@ subset.25pct.time.summary3 <- subset.25pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.3metric = 100*n/19) 
+  mutate(pct.3metric = 100*n/site.length) 
 
 
 
 ####################################
-#if >50% time unsuitable, altered
-suit_data2$alteration_50pct_time[suit_data2$Unsuitable > 50] <- "Altered"
-suit_data2$alteration_50pct_time[suit_data2$Unsuitable <= 50] <- "Unaltered"
+#if >50% time altered, altered
+suit_data2$alteration_50pct_time[suit_data2$Altered > 50] <- "Altered"
+suit_data2$alteration_50pct_time[suit_data2$Altered <= 50] <- "Unaltered"
 
 #### if 1 metric is altered, then all altered
 #aggregate site, Biol, Threshold, alteration_50pct_time
@@ -181,7 +186,7 @@ subset.50pct.time$overall.altered.3metric[which(subset.50pct.time$alteration_50p
 
 
 #save csv
-file.name <- paste0(level2.dir, "summary.50pct.time.altered.csv")
+file.name <- paste0(level2.dir, "summary.50pct.time.altered_aliso_oso_smallcks.csv")
 write.csv(subset.50pct.time, file=file.name, row.names = FALSE)
 
 #summarize overall alteration
@@ -191,7 +196,7 @@ subset.50pct.time.summary1 <- subset.50pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.1metric = 100*n/19) 
+  mutate(pct.1metric = 100*n/site.length) 
 
 #2 metric
 subset.50pct.time.summary2 <- subset.50pct.time %>% 
@@ -199,7 +204,7 @@ subset.50pct.time.summary2 <- subset.50pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.2metric = 100*n/19) 
+  mutate(pct.2metric = 100*n/site.length) 
 
 #3 metric
 subset.50pct.time.summary3 <- subset.50pct.time %>% 
@@ -207,12 +212,12 @@ subset.50pct.time.summary3 <- subset.50pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.3metric = 100*n/19) 
+  mutate(pct.3metric = 100*n/site.length) 
 
 ####################################
-#if >75% time unsuitable, altered
-suit_data2$alteration_75pct_time[suit_data2$Unsuitable > 75] <- "Altered"
-suit_data2$alteration_75pct_time[suit_data2$Unsuitable <= 75] <- "Unaltered"
+#if >75% time Unaltered, altered
+suit_data2$alteration_75pct_time[suit_data2$Altered > 75] <- "Altered"
+suit_data2$alteration_75pct_time[suit_data2$Altered <= 75] <- "Unaltered"
 
 
 #### if 1 metric is altered, then all altered
@@ -246,7 +251,7 @@ subset.75pct.time$overall.altered.3metric[which(subset.75pct.time$alteration_75p
 
 
 #save csv
-file.name <- paste0(level2.dir, "summary.75pct.time.altered.csv")
+file.name <- paste0(level2.dir, "summary.75pct.time.altered_aliso_oso_smallcks.csv")
 write.csv(subset.75pct.time, file=file.name, row.names = FALSE)
 
 
@@ -257,7 +262,7 @@ subset.75pct.time.summary1 <- subset.75pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.1metric = 100*n/19) 
+  mutate(pct.1metric = 100*n/site.length) 
 
 #2 metric
 subset.75pct.time.summary2 <- subset.75pct.time %>% 
@@ -265,7 +270,7 @@ subset.75pct.time.summary2 <- subset.75pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.2metric = 100*n/19) 
+  mutate(pct.2metric = 100*n/site.length) 
 
 #3 metric
 subset.75pct.time.summary3 <- subset.75pct.time %>% 
@@ -273,7 +278,7 @@ subset.75pct.time.summary3 <- subset.75pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.3metric = 100*n/19) 
+  mutate(pct.3metric = 100*n/site.length) 
 
 ############################################################
 #create suitability maps for 50% of time threshold 
@@ -338,6 +343,9 @@ for(i in 7:9){
       study <- ggplot(basins) + 
         geom_sf(color = "#969696", fill="white") +
         labs(title=title, subtitle = subtitle, x ="", y = "")  + 
+        annotation_scale() +
+        annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                               width = unit(.8, "cm")) +
         theme(panel.background = element_rect(fill = "white"),
               axis.ticks = element_blank(),
               axis.text = element_blank(),
@@ -423,6 +431,9 @@ for(i in species.cols){
   #Set up base map 
   study <- ggplot(basins) + 
     geom_sf(color = "#969696", fill="white") +
+    annotation_scale() +
+    annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                           width = unit(.8, "cm")) +
     labs(title=title, x ="", y = "")  + 
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
