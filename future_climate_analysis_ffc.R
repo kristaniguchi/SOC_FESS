@@ -3,6 +3,8 @@
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
 
+####NEED TO UPDATE the missing subbasin.model "201079" , not in overall list
+
 
 #load library
 library("devtools")
