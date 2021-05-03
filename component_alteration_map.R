@@ -1,4 +1,4 @@
-#Flow component alteration map
+#Flow component alteration map - FFM maps, heat maps, synthesis
 
 #install.packages("ggsn")
 #install.packages("ggmap")
@@ -21,15 +21,19 @@ library(ggmap)
 library(mapview)
 library(spData)      
 library(spDataLarge)
+library(ggspatial)    
 library(geosphere)
 library(rgeos)
 
 
 #load in data
+alt.dir.name <- "Oso_SmallCreeks/" #update to directory name with data to be analyzed
+#alteration directory
+alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
 
 #component alteration data
-
-fname = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/summary_component_alteration.csv" #update to directory
+#fname = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/summary_component_alteration.csv" #update to directory
+fname = paste0(alteration.dir, "summary_component_alteration.csv") #update to directory
 comp_alt <- read.csv(fname)
 #comp_alt <- read.csv(file = "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/summary_component_alteration.csv")
 
@@ -153,7 +157,7 @@ ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_com
 
 #read in alteration summary table - all metrics
 #data <- read.csv(file="data/ffm_alteration.df.overall.join.csv")
-data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.Aliso.csv")
+data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"))
 
 
 #create New_Name column with subbasin id to match polygon layer
@@ -334,7 +338,7 @@ x=table(acs$Dx,acs$smoking)
 x
 
 #read in alteration summary table
-data <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/ffm_alteration.df.overall.join.SanJuan.Aliso.csv")
+data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"))
 #exclude the additive subbasins
 #data <- data[26:length(data$subbasin),]
 #subset to altered only
@@ -376,13 +380,39 @@ mine.heatmap <- ggplot(data = ffm_summary, mapping = aes(x = flow_characteristic
   scale_fill_gradient(name = "Number of\nAltered Subbasins",
                       low = "#fef0d9",
                       high = "#b30000") +
-  ggtitle(label = "Altered Subbasins in Aliso and San Juan Tributaries") + theme_light() +
+  ggtitle(label = "Altered Subbasins in Aliso, Oso, and Smaller Coastal Tributaries") + theme_light() +
   theme(axis.text=element_text(size=12),
          axis.title=element_text(size=14,face="bold"))
 
 mine.heatmap
 
 ggsave(mine.heatmap, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.jpg", dpi=300, height=8, width=12)
+
+#updated heatmap without frequency or ROC for annual report 2020/2021
+#find Frequency and Rate of change (%)
+freq.ind <- grep("Frequency", ffm_summary$flow_characteristic)
+roc.ind <- grep("Rate of change", ffm_summary$flow_characteristic)
+#remove freq and ROC from heatmap
+ffm_summary2 <- ffm_summary[-c(freq.ind, roc.ind),]
+
+mine.heatmap2 <- ggplot(data = ffm_summary2, mapping = aes(x = flow_characteristic,
+                                                         y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow")),
+                                                         fill = subbasin)) +
+  geom_tile() +
+  ylab(label = "Flow Component") + xlab(label="Hydrograph Element") +
+  scale_fill_gradient(name = "Number of\nAltered Subbasins",
+                      low = "#fef0d9",
+                      high = "#b30000") +
+  ggtitle(label = "Altered Subbasins in Aliso, Oso, and Smaller Coastal Tributaries") + theme_light() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold")) +
+  geom_text()
+
+mine.heatmap2
+
+ggsave(mine.heatmap2, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.jpg", dpi=400, height=8, width=10)
+
+
 
 #simple study area plot highlighting focus for SAG presentation
 study <- ggplot(basins) + 
@@ -392,6 +422,9 @@ study <- ggplot(basins) +
 study <- ggplot(basins) + 
   geom_sf(color = "#969696", fill="#d9d9d9") +
   labs(x ="", y = "") + 
+  annotation_scale() +
+  annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                         width = unit(.8, "cm")) +
   theme(panel.background = element_rect(fill = "white"),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -399,9 +432,13 @@ study <- ggplot(basins) +
 
   
 
-study + geom_sf(data = basins3, color = "red", fill="white", size = 1.2) +
+domain <- study + geom_sf(data = basins3, color = "red", fill="white", size = 1.2) +
+  labs(title="Study Domain for Flow Ecology Analysis",subtitle = "LSPC Model Domain", x ="", y = "") +
 geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
+#save domain map
+filename.domain <- paste0()
+ggsave(domain, file= "C:/Users/KristineT/Documents/Git/SOC_FESS/study_domain.jpg", dpi=400, height=6, width=8)
 
 ########################################################
 # FFM METRIC alteration maps
@@ -449,8 +486,9 @@ colors <- c("#cb181d", "#fdbe85", "#2171b5", "#f7f7f7", "#d9d9d9")
 alteration.status.new <- c("Likely Altered High", "Likely Altered Low", "Likely Unaltered", "Indeterminate", "NA")
 lookup <- data.frame(cbind(colors, alteration.status.new))
 
-#UPDATE: output director for alteration maps FFMs
-dir.alt <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/AlterationMaps/"
+#output director for alteration maps FFMs
+dir.alt <- paste0(alteration.dir, "AlterationMaps/")
+dir.create(dir.alt)
 
 #loop through each metric and plot
 unique.ffm <- unique(basins4$ffm)
@@ -479,6 +517,9 @@ for(j in 1:length(unique.ffm)){
   study2 <- ggplot(basins) + 
     geom_sf(color = "#969696", fill="#d9d9d9") +
     labs(title=unique(basins4.sub$title_name),x ="", y = "") + 
+    annotation_scale() +
+    annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                           width = unit(.8, "cm")) +
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
           axis.text = element_blank(),
@@ -536,6 +577,9 @@ for(k in 1:length(uniq.comp)){
   study2 <- ggplot(basins) + 
     #geom_sf(color = "#969696", fill="#fdbe85") +
     geom_sf(color = "#969696", fill="#d9d9d9") +
+    annotation_scale() +
+    annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                           width = unit(.8, "cm")) +
     labs(title=unique(basins4.sub$title_component),x ="", y = "")  + 
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
@@ -575,7 +619,7 @@ component.sub <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>%
   filter(component_alteration == "likely_altered") %>%
   group_by(New_Name) %>% 
   summarise(flow_component = toString(unique(flow_component))) %>% 
-  ungroup()
+  ungroup() 
 
 #save as data.frame
 component.sub.df <- data.frame(component.sub)
@@ -601,10 +645,11 @@ comp_alt_synth
 #set new flow component alteration synthesis names
 comp_alt_synth$flow_component <- gsub(" base flow", "", comp_alt_synth$flow_component)
 comp_alt_synth$flow_component <- gsub("flow", "Flow", comp_alt_synth$flow_component)
-
+#find unique combos that need to be updated
+unique(comp_alt_synth$flow_component)
 comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Wet-season, Peak Flow, Dry-season"] <- "All"
-comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season, Peak Flow"] <- "All"
-comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season"] <- "Wet-season, Dry-season"
+#comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season, Peak Flow"] <- "All"
+#comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Dry-season, Wet-season"] <- "Wet-season, Dry-season"
 comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Peak Flow, Dry-season"] <- "Dry-season, Peak Flow"
 
 
@@ -612,14 +657,19 @@ unique(comp_alt_synth$flow_component)
 
 comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
 
-colors <- c("#ca0020", "#fdb863", "#5e3c99", "#a6dba0", "#b2abd2")
-levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+#colors <- c("#ca0020", "#fdb863", "#5e3c99", "#a6dba0", "#b2abd2")
+#levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+colors <- c("#d7191c", "#fdae61", "#2c7bb6")
+levels <- c("All", "Dry-season, Peak Flow", "Peak Flow")
 
 #base map 
 study2 <- ggplot(basins) + 
   geom_sf(color = "lightgrey", fill="white") +
   #geom_sf(color = "#969696", fill="white") +
   labs(title="Hydrologic Alteration Synthesis", subtitle = "Wet and Dry Season Base-flow, Peak Flow",x ="", y = "")  + 
+  annotation_scale() +
+  annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                         width = unit(.8, "cm")) +
   theme(panel.background = element_rect(fill = "white"),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -648,6 +698,8 @@ syn.plot2 <- syn.plot + geom_sf(data = comp_alt_synth, size = 1, fill = NA, aes(
 #print
 print(syn.plot2)
 
-
+#save image
+plot.fname <- paste0(dir.alt, "Synthesis_Alteration_Map_wetdrypeak.jpg")
+ggsave(syn.plot, file=plot.fname, dpi=400, height=6, width=8)
 
 
