@@ -5,6 +5,7 @@
 #install.packages("mapview")
 #install.packages("geosphere")
 #install.packages("rgeos")
+#install.packages("ggspatial")
 #to install spDataLarge
 #devtools::install_github("robinlovelace/geocompr")
 library(spData)
@@ -18,6 +19,7 @@ library(readxl)
 library(sf)
 library(ggsn)
 library(ggmap)
+library(ggspatial)
 library(mapview)
 library(spData)      
 library(spDataLarge)
@@ -28,21 +30,25 @@ library(rgeos)
 #load in data
 #ASCI/CSCI
 level2.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/"
-fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed.csv") #update to directory
+#fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed.csv") #update to directory
+fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed_aliso_oso_small_creeks.csv") #all lspc subbasins
+
 #read in suitability data 
 suit_data <- read.csv(fname)
 
+
+#Do not process wildermuth data for annual report
 #wildermuth data
-fname.wildermuth <- paste0(level2.dir, "09_metric_suitability_tally_Wildermuth.csv")
+#fname.wildermuth <- paste0(level2.dir, "09_metric_suitability_tally_Wildermuth.csv")
 #read in wildermuth data 
-suit_data_wildermuth <- read.csv(fname.wildermuth) %>% 
-  rename(New_Name = site) #change site to New_Name to combine with other datasets
-#create alteration vector: change suitable and unsuitable to altered and unaltered
-suit_data_wildermuth$alteration_75pct_time <- suit_data_wildermuth$Suitability
-suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Unsuitable"] <- "Altered"
-suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Suitable"] <- "Unaltered"
+#suit_data_wildermuth <- read.csv(fname.wildermuth) %>% 
+  #rename(New_Name = site) #change site to New_Name to combine with other datasets
+#create alteration vector: change suitable and Altered to altered and unaltered
+#suit_data_wildermuth$alteration_75pct_time <- suit_data_wildermuth$Suitability
+#suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Altered"] <- "Altered"
+#suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Suitable"] <- "Unaltered"
 #only use 50% prob
-suit_data_wildermuth <- suit_data_wildermuth[suit_data_wildermuth$Threshold == "Threshold50",]
+#suit_data_wildermuth <- suit_data_wildermuth[suit_data_wildermuth$Threshold == "Threshold50",]
 
 
 #UPDATE
@@ -100,9 +106,9 @@ suit_data2 <- suit_data %>%
 suit_data2_50 <- suit_data2[suit_data2$Threshold == "Threshold50",]
 
 ####################################
-#if >75% time unsuitable, altered
-suit_data2_50$alteration_75pct_time[suit_data2_50$Unsuitable > 75] <- "Altered"
-suit_data2_50$alteration_75pct_time[suit_data2_50$Unsuitable <= 75] <- "Unaltered"
+#if >75% time Altered, altered
+suit_data2_50$alteration_75pct_time[suit_data2_50$Altered > 75] <- "Altered"
+suit_data2_50$alteration_75pct_time[suit_data2_50$Altered <= 75] <- "Unaltered"
 
 #### if 1 metric is altered, then all altered
 #aggregate site, Biol, Threshold, alteration_75pct_time
@@ -123,34 +129,38 @@ subset.75pct.time$overall.altered.2metric[which(subset.75pct.time$alteration_75p
 #if 3 metrics unaltered --> class it as unaltered
 subset.75pct.time$overall.altered.2metric[which(subset.75pct.time$alteration_75pct_time == "Unaltered" & subset.75pct.time$n > 1)] <- "Unaltered"
 
+#########################
 
+###Do not process wildermuth for annual report ####
 #format wildermuth data and tally
-subset.wildermuth <- suit_data_wildermuth %>% 
-  group_by(New_Name, Biol, Threshold, alteration_75pct_time) %>% 
-  tally() %>% 
-  ungroup()
+#subset.wildermuth <- suit_data_wildermuth %>% 
+  #group_by(New_Name, Biol, Threshold, alteration_75pct_time) %>% 
+  #tally() %>% 
+  #ungroup()
 #save as dataframe
-subset.wildermuth <- data.frame(subset.wildermuth)
+#subset.wildermuth <- data.frame(subset.wildermuth)
 #remove subbasins that are NA (Q99 rows)
-subset.wildermuth <- subset.wildermuth[-which(is.na(subset.wildermuth$New_Name)),]
+#subset.wildermuth <- subset.wildermuth[-which(is.na(subset.wildermuth$New_Name)),]
 
 #Wildermuth: 2 metric altered, considered altered (doesn't have Q99 so no 3rd metric)
 #if number altered > 1 --> class it as overall altered
-subset.wildermuth$overall.altered.2metric <- NA
-subset.wildermuth$overall.altered.2metric[which(subset.wildermuth$alteration_75pct_time == "Altered" & subset.wildermuth$n  == 2)] <- "Altered"
+#subset.wildermuth$overall.altered.2metric <- NA
+#subset.wildermuth$overall.altered.2metric[which(subset.wildermuth$alteration_75pct_time == "Altered" & subset.wildermuth$n  == 2)] <- "Altered"
 #if 1 or 2 metrics unaltered --> class it as unaltered
-subset.wildermuth$overall.altered.2metric[which(subset.wildermuth$alteration_75pct_time == "Unaltered" & subset.wildermuth$n > 0)] <- "Unaltered"
+#subset.wildermuth$overall.altered.2metric[which(subset.wildermuth$alteration_75pct_time == "Unaltered" & subset.wildermuth$n > 0)] <- "Unaltered"
 #if NA stay NA
+#combine with lspc data
+#subset.75pct.time.all <- merge(subset.75pct.time, subset.wildermuth, all = TRUE)
 
+#########################
 
 #save csv
-file.name <- paste0(level2.dir, "summary.50prob.75pct.time.altered.2metrics.csv")
+file.name <- paste0(level2.dir, "summary.50prob.75pct.time.altered.2metrics_aliso_oso_small_creeks.csv")
 write.csv(subset.75pct.time, file=file.name, row.names = FALSE)
 
-#combine with lspc data
-subset.75pct.time.all <- merge(subset.75pct.time, subset.wildermuth, all = TRUE)
 
 #summarize overall alteration: number of altered and unaltered subbasins, percent of total subbasins using these thresholds
+site.length <- length(unique(subset.75pct.time$New_Name))
 
 #2 metric
 subset.75pct.time.summary2 <- subset.75pct.time %>% 
@@ -158,30 +168,44 @@ subset.75pct.time.summary2 <- subset.75pct.time %>%
   tally() %>% 
   ungroup() %>% 
   na.omit() %>% 
-  mutate(pct.2metric = 100*n/19) 
+  mutate(pct.2metric = 100*n/site.length) 
 
 data.frame(subset.75pct.time.summary2)
 
-subset.75pct.time.summary2.all <- subset.75pct.time.all %>% 
-  group_by(Biol, Threshold, overall.altered.2metric) %>% 
-  tally() %>% 
-  ungroup() %>% 
-  na.omit()  
+#summary if using wildermuth:
+#subset.75pct.time.summary2.all <- subset.75pct.time.all %>% 
+ #group_by(Biol, Threshold, overall.altered.2metric) %>% 
+  #tally() %>% 
+  #ungroup() %>% 
+  #na.omit()  
 
-data.frame(subset.75pct.time.summary2.all)
+#data.frame(subset.75pct.time.summary2.all)
 
 ############################################################
 #create synthesis of CSCI and ASCI alteration:
   #if both altered, high priority; if unaltered --> low priority
 
+#if using wildermuth:
 #remove NA values
-subset.75pct.time.all2 <- na.omit(subset.75pct.time.all)
-subset.75pct.time.summary2.all <- subset.75pct.time.all %>% 
+#subset.75pct.time.all2 <- na.omit(subset.75pct.time.all)
+#subset.75pct.time.summary2.all <- subset.75pct.time.all %>% 
+  #group_by(New_Name, Threshold, overall.altered.2metric) %>% 
+  #tally() %>% 
+  #ungroup() %>% 
+  #na.omit()  
+#overall.summary <- data.frame(subset.75pct.time.summary2.all)
+
+#remove NA values
+subset.75pct.time.all2 <- na.omit(subset.75pct.time)
+subset.75pct.time.summary2.all <- subset.75pct.time %>% 
   group_by(New_Name, Threshold, overall.altered.2metric) %>% 
   tally() %>% 
   ungroup() %>% 
   na.omit()  
 overall.summary <- data.frame(subset.75pct.time.summary2.all)
+
+#ASCI summary table
+subset.75pct.time.all2.asci <- subset.75pct.time.all2[subset.75pct.time.all2$Biol == "ASCI",]
 
 ##
 overall.summary$synthesis_alteration <- NA
@@ -212,7 +236,7 @@ synthesis.summary.table <- data.frame(synthesis.summary.table)
 #colors for suitability categories
 colors <- c("#ca0020", "#fdae61","#0571b0", "white")
 priority <- c("High Priority",  "Medium Priority","Low Priority", NA)
-categories <- c("High", "Medium","Low","Not evaluated")
+categories <- c("High (Alteration: CSCI & ASCI)", "Medium (Alteration: CSCI or ASCI)","Low (Alteration: None)","Not evaluated")
 lookup <- data.frame(cbind(colors, priority, categories))
 
 #merge with basins
@@ -228,7 +252,11 @@ source2 <- synthesis.summary %>%
   #plot
   #Set up base map 
   study <- ggplot(basins) + 
+    labs(title="Prioritization for Additional Analysis", subtitle = "Based on Biologically-Relevant Flow Alteration",x ="", y = "")  + 
     geom_sf(color = "lightgrey", fill="white") +
+    annotation_scale() +
+    annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                           width = unit(.8, "cm")) +
     #labs(x ="", y = "")  + 
     theme(panel.background = element_rect(fill = "white"),
           axis.ticks = element_blank(),
@@ -245,7 +273,7 @@ source2 <- synthesis.summary %>%
   
   #synthesis map
   syn.plot <- study + geom_sf(data = subset.join, color= "lightgrey", aes(fill=synthesis_alteration, geometry = geometry)) +
-    scale_fill_manual(name = "Priority", labels = lookup.sub$categories, values=lookup.sub$colors) +
+    scale_fill_manual(name = "Priority based on Biologic Flow Alteration", labels = lookup.sub$categories, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #add in model source
@@ -259,8 +287,8 @@ source2 <- synthesis.summary %>%
   
 
   #write plot
-  out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_Aliso_SanJuan.jpg")
-  ggsave(syn.plot2, file = out.filename, dpi=300, height=4, width=6)
+  out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_Aliso_Oso_small_creeks.jpg")
+  ggsave(syn.plot, file = out.filename, dpi=500, height=6, width=8)
   
 
 
@@ -283,7 +311,8 @@ source2 <- synthesis.summary %>%
 #create suitability maps for 50% probabily, for 75% of time altered altered, 2 metrics
 
 #names
-cols <- names(subset.75pct.time.all)
+#cols <- names(subset.75pct.time.all)
+cols <- names(subset.75pct.time)
 col.names <- "overall.altered.2metric"
 
 #colors for suitability categories
@@ -293,15 +322,15 @@ categories <- c("Likely Altered", "Likely Unaltered", "Not evaluated")
 lookup <- data.frame(cbind(colors, alteration, categories))
 
 
-for(i in 6){
+for(i in 7){
   #title
   col.name <- cols[i]
   metric.threshold <- gsub("overall.altered.", "", col.name)
   metric.threshold <- gsub("metric", " Metric Altered Threshold", metric.threshold)
   
   #subset 
-  subset <- subset.75pct.time[,c(1, 2, 3, i)]
-  #subset <- subset.75pct.time[,c(2, 3,4, i)]
+  #subset <- subset.75pct.time[,c(1, 2, 3, i)]
+  subset <- subset.75pct.time[,c(2, 3,4, i)]
   #subset <- subset.50pct.time[,c(2, 3,4, i)]
   #subset <- subset.25pct.time[,c(2, 3,4, i)]
   
@@ -330,14 +359,19 @@ for(i in 6){
         full_join(basins, by = c('New_Name'))
       
       #title
-      title <- paste0(z, ": ", prob, "%")
-      subtitle <- metric.threshold
+      #title <- paste0(z, ": ", prob, "%")
+      #subtitle <- metric.threshold
+      title <- paste0(z)
+      subtitle <- "Biologically-Relevant Flow Alteration"
       
       #plot
       #Set up base map 
       study <- ggplot(basins) + 
         geom_sf(color = "lightgrey", fill="white") +
         labs(title=title, subtitle = subtitle, x ="", y = "")  + 
+        annotation_scale() +
+        annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                               width = unit(.8, "cm")) +
         theme(panel.background = element_rect(fill = "white"),
               axis.ticks = element_blank(),
               axis.text = element_blank(),
@@ -355,13 +389,13 @@ for(i in 6){
       
       #synthesis map
       syn.plot <- study + geom_sf(data = subset.join, color= "lightgrey", aes(fill=`Alteration - Bio`, geometry = geometry)) +
-        scale_fill_manual(name = "Alteration - Bio", labels = lookup.sub$categories, values=lookup.sub$colors) +
+        scale_fill_manual(name = "Biologic Flow Alteration", labels = lookup.sub$categories, values=lookup.sub$colors) +
         geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
       #print
       print(syn.plot)
       
       #write plot
-      out.filename <- paste0(out.dir, z, "_alteration_map_Aliso_SanJuan.jpg")
+      out.filename <- paste0(out.dir, z, "_alteration_map_Aliso_Oso_small_creeks.jpg")
       ggsave(syn.plot, file = out.filename, dpi=300, height=4, width=6)
       
     }
@@ -370,10 +404,26 @@ for(i in 6){
   
 }
 
+#rename Alteration - Bio to likely unaltered likely altered categories
+subset$`Alteration - Biology` <- gsub("Altered", "Likely Altered", subset$`Alteration - Biology`)
+subset$`Alteration - Biology` <- gsub("Unaltered", "Likely Unaltered", subset$`Alteration - Biology`)
 
+#save the subset summary table with indices, subbasin
+#pivot wider to get hydro.alteration.CSCI and hydro.alteration.ASCI columns
+subset2 <- subset %>% 
+  pivot_wider(names_from = Biol, values_from = `Alteration - Biology`) %>% 
+  rename(hydro.alteration.CSCI = CSCI) %>% 
+  rename(hydro.alteration.ASCI = ASCI)
 
-
-
+#combine with overall summary
+#remove na rows from overall summary
+overall.summary2 <- na.omit(overall.summary)
+summary.csci.asci.synthesis <- subset2 %>% 
+  inner_join(overall.summary2, by = c('New_Name')) %>% 
+  select(c(names(subset2), "synthesis_alteration"))
+#write csv summary for CSCI and ASCI
+file.name.summary <- paste0(out.dir, "SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary.csv")
+write.csv(summary.csci.asci.synthesis, file = file.name.summary)
 
 
 
