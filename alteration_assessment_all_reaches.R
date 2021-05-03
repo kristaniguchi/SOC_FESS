@@ -28,9 +28,24 @@ mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGF
 #set token
 set_token(mytoken)
 
-#directories for current LSCP, reference LSPC
-curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
+####UPDATE: directories for current LSCP, reference LSPC
+#Aliso
+#curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
+#aliso recalibration directory name
+#alt.dir.name <- "Aliso_RecalibrationUpdate/"
+
+#Oso and other coastal watersheds
+curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
+#oso recalibration directory name
+alt.dir.name <- "Oso_SmallCreeks/"
+
+#alteration directory
+alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
+#create directory if does not exist
+dir.create(alteration.dir)
+
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
@@ -49,6 +64,8 @@ for(z in 1:length(subbasin_lookup$Letter)){
 #find and replace - in new.subbasinname with nothing, make consistent with file name
 new.subbasinname <- gsub("-", "", new.subbasinname)
 basin_comid_lookup$new.subbasinname <- new.subbasinname
+
+#write.csv(basin_comid_lookup, file="L:/San Juan WQIP_KTQ/Data/SpatialData/SOC_FESS_Subbasin_NHD.COMID_Lookup_Table.csv")
 
 
 ##############################
@@ -78,7 +95,7 @@ if(length(grep("201079", fnames)) > 0 ){
 fnames <- list.files(curr.dir, pattern = "\\.out$")
 ind.old <- grep("old", fnames) 
 #exclude old if old is still in list
-if(ind.old > 0){
+if(length(ind.old) > 0){
   fnames <- fnames[-ind.old]
 }
 
@@ -192,6 +209,7 @@ for (i in 1:length(fnames)){
     #add leading zero to hour
     MONTH2 <- sprintf("%02d",ref$month)
     DAY2 <- sprintf("%02d",ref$day)
+    date2 <- paste(MONTH2, DAY2, ref$year, sep="/")
     ref$date <- date2
     unique.dates2 <- unique(date2)
     #format q to be numeric
@@ -202,7 +220,7 @@ for (i in 1:length(fnames)){
     #calc mean daily flow for current predicted data
     mean.daily.ref <- ref %>% 
       group_by(date) %>% 
-      summarize(flow = mean(flow.cfs, ra.rm = TRUE)) %>% 
+      summarize(flow = mean(flow.cfs, na.rm = TRUE)) %>% 
       ungroup()
     
     #if NaN, replace with NA
@@ -418,7 +436,7 @@ for (i in 1:length(fnames)){
     }
   }, error = function(e) {
     print(paste0(i, " FFC Error"))
-    ffc.errors[i] <- subbasin.model
+    ffc.errors <- c(ffc.errors, subbasin.model)
     #}, warning = function(w) {
     #print(warnings()) #could delete this if not necessary
   })
@@ -429,36 +447,38 @@ for (i in 1:length(fnames)){
 #if one metric in component is altered, component is considered altered
 
 #Only rerun this if you do not want to run entire script above but have already done so previously
-#loop through all dirs 1-20 and combine alteration df with overall df (since started at i 19 in loop above)
-#alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
-#names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
+#loop through all dirs and combine alteration df with overall df (since started at i 19 in loop above)
+alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
+names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
-#dir.ffm <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/daily/FFMs/"
-#list <- list.files(dir.ffm, full.names = TRUE)
+dir.ffm <- paste0(curr.dir, "daily/FFMs/" )
+list <- list.files(dir.ffm, full.names = TRUE)
 
-#for(y in 1:length(list)){
-  #path.open.list <- list.files(list[y], full.names = TRUE)
-  #ind.file <- grep("_alteration_comparison_lspcref_statewide.csv$", path.open.list)
-  #file <- read.csv(path.open.list[ind.file])
-  #append to overall df
-  #alteration.df.overall <- data.frame(rbind(alteration.df.overall, file))
-#}
+for(y in 1:length(list)){
+  path.open.list <- list.files(list[y], full.names = TRUE)
+  ind.file <- grep("_alteration_comparison_lspcref_statewide.csv$", path.open.list)
+  if(length(ind.file) > 0){
+    file <- read.csv(path.open.list[ind.file])
+    #append to overall df
+    alteration.df.overall <- data.frame(rbind(alteration.df.overall, file))
+  }
+}
 
 #backup.alteration.df.overall <- alteration.df.overall
 #alteration.df.overall <- backup.alteration.df.overall
 
-
-#alteration directory
-alteration.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Aliso_RecalibrationUpdate/"
+#alteration DF
 unique.sites <- unique(alteration.df.overall$subbasin.model)
+#if first site is NA, remove first row
+if(is.na(unique.sites[1])){
+  alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$COMID),]
+}
 #join the alteration df with the ffm table
 ffm.labels$ffm <- as.character(ffm.labels$metric)
 alteration.df.overall$ffm <- as.character(alteration.df.overall$ffm)
 unique.ffm <- unique(ffm.labels$ffm)
 
 alteration.df.overall.join <- full_join(alteration.df.overall, ffm.labels, by="ffm")
-#remove NA first row
-alteration.df.overall.join <- alteration.df.overall.join[2:length(alteration.df.overall.join$COMID),]
 #add column for component.alteration
 alteration.df.overall.join$component_alteration <- alteration.df.overall.join$alteration.status
 alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, alteration.df.overall.join$component_alteration)
