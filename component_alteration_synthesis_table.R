@@ -22,6 +22,7 @@ data2$subbasin.model <- as.character(data2$subbasin.model)
 #data3$subbasin <- as.character(data2$subbasin)
 
 #alteration directory
+alt.dir.name <- "Oso_SmallCreeks"
 alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
 
 ##############################
