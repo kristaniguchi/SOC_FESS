@@ -15,6 +15,9 @@ data1$subbasin.model <- as.character(data1$subbasin.model)
 #from Oso and other watersheds
 data2 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Oso_SmallCreeks/ffm_alteration.df.overall.join.csv")
 data2$subbasin.model <- as.character(data2$subbasin.model)
+#for data2 Oso output data, exclude Oso subbasins since recalibration is included in San Juan data3 outputs
+oso.subbasins <- c("403010", "403011", "403020", "403030", "404010", "405010", "405020")
+data2 <- data2[! (data2$subbasin.model %in% oso.subbasins),]
 
 #from San Juan - LSPC
 data3 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/SanJuan_LSPC/ffm_alteration.df.overall.join.csv")
@@ -22,31 +25,29 @@ data3$subbasin.model <- as.character(data3$subbasin.model)
 data3$subbasin <- as.character(data3$subbasin)
 
 
+#replace alteration data from low-flow bias
+data4 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/low.flow.bias.all/ffm_alteration.df.overall.join.csv")
+data4$subbasin.model <- as.character(data4$subbasin.model)
+data4$subbasin <- as.character(data4$subbasin)
+#get unique low flow bias sites, remove all non low flow bias corrected row values from delta1 to delta1 to 3, and then rbind
+unique.lowflow.sites <- unique(data4$subbasin.model)
+
+
+
 #alteration directory
 #alt.dir.name <- "Oso_SmallCreeks"
-alt.dir.name <- "SanJuan_LSPC"
+#alt.dir.name <- "SanJuan_LSPC"
+alt.dir.name <- "Aliso_Oso_SmCk_SanJuan_all_lowflowbias"
 alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
-
-##############################
-#lookuptable to convert subbasin codes for model output subbasin names
-subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/Old_Runs/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
-
-#convert basin orig name to outputfile name (model subbasin name) 
-new.subbasinname <- data3$subbasin.model
-subbasin.old <- data3$subbasin.model
-
-for(z in 1:length(subbasin_lookup$Letter)){
-  new.subbasinname <- gsub(subbasin_lookup$Letter[z], subbasin_lookup$Number[z], new.subbasinname)
-}
-
-#for wildermuth outputs: find and replace - in new.subbasinname with nothing, for wildermuth outputs, using actual subbasin name not new one
-new.subbasinname <- gsub("-", "", new.subbasinname)
-data3$subbasin.model <- new.subbasinname
-data3$subbasin <- subbasin.old
 
 #merge into one df 
 data <- full_join(data1, data2) %>% 
   full_join(data3)
+#remove all low flow bias rows and add to overall data
+data <- data[! (data$subbasin.model %in% unique.lowflow.sites),]
+#combine with low flow bias corrected deltaH
+data <- data %>% 
+  bind_rows(data4)
 
 #replace base flow with baseflow for all FFM and components
 data <- data.frame(lapply(data, function(x){
@@ -60,7 +61,7 @@ data <- data.frame(lapply(data, function(x){
 
 
 #write combine ffm alteration
-write.csv(data, file = paste0(alteration.dir, "/ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.csv"), row.names = FALSE)
+write.csv(data, file = paste0(alteration.dir, "/ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.lowflowbias.csv"), row.names = FALSE)
 
 ##############################################################
 #loop to summarize alteration component
@@ -123,7 +124,7 @@ write.csv(comp_summary2, file = paste0(alteration.dir, "/summary_component_alter
 #######################
 #create heatmap of alteration statuses and number of subbasins considered likely altered
 #read in alteration summary table
-data <- read.csv(file=paste0(alteration.dir, "/ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.csv"))
+data <- read.csv(file=paste0(alteration.dir, "/ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.lowflowbias.csv"))
 names(data)
 
 #summary table with number of subbasins that are in each alteration category for each ffm
