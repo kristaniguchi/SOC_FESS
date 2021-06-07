@@ -27,7 +27,7 @@ library(rgeos)
 
 
 #load in data
-alt.dir.name <- "Oso_SmallCreeks/" #update to directory name with data to be analyzed
+alt.dir.name <- "Aliso_Oso_SmCk_SanJuan_all_lowflowbias/" #update to directory name with data to be analyzed
 #alteration directory
 alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
 
@@ -43,7 +43,7 @@ comp_alt$New_Name <- comp_alt$subbasin
 #comp_alt <- comp_alt[6:length(comp_alt$COMID),]
 
 #set levels for flow component so it goes in sequence of WY
-comp_alt$flow_component <- factor(comp_alt$flow_component, levels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"))
+comp_alt$flow_component <- factor(comp_alt$flow_component, levels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"))
 
 #subbasin polygon shapefile
 basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
@@ -62,8 +62,8 @@ comp_alt <- comp_alt %>%
   inner_join(basins, by = c('New_Name'))
 comp_alt
 
-#model source LSPC or Wildermuth
-source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
+#Do not need source anymore since all from LSPC (model source LSPC or Wildermuth)
+#source <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/Subbasins_inmodel_source.csv")
 
 
 #find centroids of subbasins
@@ -100,7 +100,7 @@ bar.testplot_list <-
       ggplot(centroids[centroids$New_Name == unique.sites[i],])+
         geom_bar(aes(factor(flow_component),n_ffm_altered,group=New_Name, fill = factor(flow_component)), 
                  position='dodge',stat='identity', color = NA) +
-        scale_fill_manual(name = "Altered Flow Components", labels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
+        scale_fill_manual(name = "Altered Flow Components", labels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
         labs(x = NULL, y = NULL) + 
         theme(legend.position = "none", rect = element_blank(),
               line = element_blank(), text = element_blank()) 
@@ -134,7 +134,7 @@ sub1 <- ggplot(basins2[basins2$New_Name == unique.sites[1],]) +
   xlab("") + ylab("")
 
 sub1
-ggsave(sub1, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
+#ggsave(sub1, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
 
 
 #create separate barplot for just the first item
@@ -143,11 +143,11 @@ ggsave(sub1, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/subbasin1_compa
 bar <-  ggplot(centroids[centroids$New_Name == unique.sites[1],]) +
         geom_bar(aes(factor(flow_component),n_ffm_altered,group=New_Name, fill = factor(flow_component)), 
         position='dodge',stat='identity', color = NA) +
-        scale_fill_manual(name = "Flow Components", labels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
+        scale_fill_manual(name = "Flow Components", labels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
         labs(x = "Flow Components", y = "Number of Altered Metrics") +
         theme(panel.background = element_rect(fill = "white"))
 bar
-ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_compalteration.jpg", dpi=300, height=5, width=8.5)
+#ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_compalteration.jpg", dpi=300, height=5, width=8.5)
 
 
 #################################################
@@ -157,7 +157,7 @@ ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_com
 
 #read in alteration summary table - all metrics
 #data <- read.csv(file="data/ffm_alteration.df.overall.join.csv")
-data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"))
+data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.lowflowbias.csv"))
 
 
 #create New_Name column with subbasin id to match polygon layer
@@ -166,7 +166,7 @@ data$New_Name <- data$subbasin
 #data <- data[25:length(data$COMID),]
 
 #set levels for flow component so it goes in sequence of WY
-data$flow_component <- factor(data$flow_component, levels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"))
+data$flow_component <- factor(data$flow_component, levels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"))
 
 #subset to the flow characteristic of interest - magnitude
 mag <- data[data$flow_characteristic == "Magnitude (cfs)",] 
@@ -241,9 +241,9 @@ bar.testplot_list <-
     }
     gt_plot <- ggplotGrob(
       ggplot(mag.alt.n)+
-        geom_bar(aes(factor(flow_component),count, fill = factor(flow_component)), 
+        geom_bar(aes(flow_component,count, fill = flow_component), 
                  position='dodge',stat='identity', color = NA) +
-        scale_fill_manual(name = "Altered Flow Components", labels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
+        scale_fill_manual(name = "Altered Flow Components", labels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
         labs(x = NULL, y = NULL) + 
         theme(legend.position = "none", rect = element_blank(),
               line = element_blank(), text = element_blank()) 
@@ -288,7 +288,7 @@ mag.alt.n$count <- mag.alt.n$long
 #find altered components, unaltered components should have 0 count
 altered.comp <- mag.alt.n$flow_component[mag.alt.n$alteration.status == "likely_altered"]
 #find rows with unaltered components
-unaltered.comp.rows <- mag.alt.n[mag.alt.n$flow_component != altered.comp,]
+unaltered.comp.rows <- mag.alt.n[mag.alt.n$alteration.status == "likely_unaltered",]
 if(length(unaltered.comp.rows$flow_component) > 0){
   #change count to 0 (0 altered flow metrics)
   unaltered.comp.rows$count <- rep(0, length(unaltered.comp.rows$flow_component))
@@ -301,18 +301,27 @@ if(length(unaltered.comp.rows$flow_component) > 0){
   mag.alt.n <- mag.alt.n[mag.alt.n$alteration.status == "likely_altered",]
 }
 
+
+#component colors labels 
+components <- c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow")
+colors <- c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")
+labels <- data.frame(cbind(components, colors))
+#subset based on what will be plotted
+components.plot <- as.character(unique(mag.alt.n$flow_component))
+labels.sub <- labels[labels$components %in% components.plot,]
+
 ggplot(mag.alt.n)+
-  geom_bar(aes(factor(flow_component),count, fill = factor(flow_component)), 
+  geom_bar(aes(flow_component,count, fill = flow_component), 
            position='dodge',stat='identity', color = NA) +
-  scale_fill_manual(name = "Altered Flow Components", labels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
+  scale_fill_manual(name = "Altered Flow Components", labels = labels.sub$components, values = labels.sub$colors) +
   labs(x = NULL, y = NULL) + 
   theme(legend.position = "none", rect = element_blank(),
         line = element_blank(), text = element_blank()) 
 
 bar <-  ggplot(mag.alt.n) +
-  geom_bar(aes(factor(flow_component),count,fill = factor(flow_component)), 
+  geom_bar(aes(flow_component,count,fill = flow_component), 
            position='dodge',stat='identity', color = NA) +
-  scale_fill_manual(name = "Flow Components", labels = c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow"), values = c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e")) +
+  scale_fill_manual(name = "Altered Flow Components", labels = labels.sub$components, values = labels.sub$colors) +
   labs(x = "Flow Components", y = "Number of\nAltered Magnitude Metrics") +
   theme(panel.background = element_rect(fill = "white")) +
   theme(axis.title.y = element_text(size = rel(1.4),face="bold")) + theme(axis.title.x = element_text(size = rel(1.4),face="bold")) +
@@ -338,7 +347,7 @@ x=table(acs$Dx,acs$smoking)
 x
 
 #read in alteration summary table
-data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.csv"))
+data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.lowflowbias.csv"))
 #exclude the additive subbasins
 #data <- data[26:length(data$subbasin),]
 #subset to altered only
@@ -373,7 +382,7 @@ ffm_summary <- data.frame(aggregate(altered.new, by = altered.new[c('flow_charac
 #create table for heatmap
 dev.off()
 mine.heatmap <- ggplot(data = ffm_summary, mapping = aes(x = flow_characteristic,
-                                                       y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow")),
+                                                       y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow")),
                                                        fill = subbasin)) +
   geom_tile() +
   ylab(label = "Flow Component") + xlab(label="Hydrograph Element") +
@@ -386,7 +395,7 @@ mine.heatmap <- ggplot(data = ffm_summary, mapping = aes(x = flow_characteristic
 
 mine.heatmap
 
-ggsave(mine.heatmap, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.jpg", dpi=300, height=8, width=12)
+ggsave(mine.heatmap, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration_allsubbasins.jpg", dpi=300, height=8, width=12)
 
 #updated heatmap without frequency or ROC for annual report 2020/2021
 #find Frequency and Rate of change (%)
@@ -396,21 +405,21 @@ roc.ind <- grep("Rate of change", ffm_summary$flow_characteristic)
 ffm_summary2 <- ffm_summary[-c(freq.ind, roc.ind),]
 
 mine.heatmap2 <- ggplot(data = ffm_summary2, mapping = aes(x = flow_characteristic,
-                                                         y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season base flow", "Peak flow", "Spring recession flow", "Dry-season base flow")),
+                                                         y = factor(flow_component, levels =  c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow")),
                                                          fill = subbasin)) +
   geom_tile() +
   ylab(label = "Flow Component") + xlab(label="Hydrograph Element") +
   scale_fill_gradient(name = "Number of\nAltered Subbasins",
                       low = "#fef0d9",
                       high = "#b30000") +
-  ggtitle(label = "Altered Subbasins in Aliso, Oso, and Smaller Coastal Tributaries") + theme_light() +
+  ggtitle(label = "Altered Subbasins in Aliso, Oso, Smaller Coastal Tributaries, and San Juan") + theme_light() +
   theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14,face="bold")) +
-  geom_text()
+        axis.title=element_text(size=14,face="bold")) #+
+  #geom_text()
 
 mine.heatmap2
 
-ggsave(mine.heatmap2, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.jpg", dpi=400, height=8, width=10)
+ggsave(mine.heatmap2, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.allsubbasins.jpg", dpi=400, height=8, width=10)
 
 
 
@@ -438,7 +447,7 @@ geom_sf(data = reaches, color = "#67a9cf", size = 0.5)
 
 #save domain map
 filename.domain <- paste0()
-ggsave(domain, file= "C:/Users/KristineT/Documents/Git/SOC_FESS/study_domain.jpg", dpi=400, height=6, width=8)
+ggsave(domain, file= "C:/Users/KristineT/Documents/Git/SOC_FESS/study_domain_allLSPC.jpg", dpi=400, height=6, width=8)
 
 ########################################################
 # FFM METRIC alteration maps
@@ -474,11 +483,11 @@ basins4$alteration.status.new <- gsub("Indeterminate High", "Indeterminate", bas
 basins4$alteration.status.new <- gsub("Indeterminate Low", "Indeterminate", basins4$alteration.status.new)
 unique(basins4$alteration.status.new)
 
-#for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
-basins4$alteration.status.new[basins4$New_Name == "L02-040"] <- "NA"
-basins4$alteration.status.new[basins4$New_Name == "L02-041"] <- "NA"
-basins4$component_alteration[basins4$New_Name == "L02-040"] <- "NA"
-basins4$component_alteration[basins4$New_Name == "L02-041"] <- "NA"
+# #for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
+# basins4$alteration.status.new[basins4$New_Name == "L02-040"] <- "NA"
+# basins4$alteration.status.new[basins4$New_Name == "L02-041"] <- "NA"
+# basins4$component_alteration[basins4$New_Name == "L02-040"] <- "NA"
+# basins4$component_alteration[basins4$New_Name == "L02-041"] <- "NA"
 
 
 #list of colors and alteration statuses, color current by alteration status
@@ -530,10 +539,10 @@ for(j in 1:length(unique.ffm)){
     scale_fill_manual(name = "Alteration Status", labels = lookup.sub$alteration.status.new, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
-  #add in model source
-  alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
-    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  # #add in model source
+  # alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
+  #   scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
+  #   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print
  # print(alt.plot)
@@ -550,6 +559,17 @@ for(j in 1:length(unique.ffm)){
 
 #loop through each component and plot panel plots of the metrics
 uniq.comp <- unique(basins4$flow_component)
+
+#update the baseflow magnitude for title_ffm (Wet_BFL_Mag_10" "Wet_BFL_Mag_50" "DS_Mag_50" "DS_Mag_90")
+unique(basins4$title_ffm2)
+#Wet_BFL_Mag_10
+basins4$title_ffm[basins4$ffm == "Wet_BFL_Mag_10"] <- " Magnitude 10th percentile (cfs)"
+#Wet_BFL_Mag_50
+basins4$title_ffm[basins4$ffm == "Wet_BFL_Mag_50"] <- " Magnitude 50th percentile (cfs)"
+#Wet_BFL_Mag_10
+basins4$title_ffm[basins4$ffm == "DS_Mag_50"] <- " Magnitude 50th percentile (cfs)"
+#Wet_BFL_Mag_10
+basins4$title_ffm[basins4$ffm == "DS_Mag_90"] <- " Magnitude 90th percentile (cfs)"
 
 for(k in 1:length(uniq.comp)){
   #subset basins4 to ffm j
@@ -594,10 +614,10 @@ for(k in 1:length(uniq.comp)){
     theme(strip.text.x = element_text(size = font.size)) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
-  #add in model source
-  alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
-    scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
-    geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+  # #add in model source
+  # alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
+  #   scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
+  #   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
   #print
   #print(alt.plot)
@@ -614,12 +634,19 @@ for(k in 1:length(uniq.comp)){
 #create synthesis map for alteration vs wet, dry, peak
 
 #subset component alteration data to wet, dry, peak
-comp.synthesis <- c("Wet-season base flow", "Peak flow", "Dry-season base flow")
+comp.synthesis <- c("Wet-season baseflow", "Peak flow", "Dry-season baseflow")
 component.sub <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
   filter(component_alteration == "likely_altered") %>%
   group_by(New_Name) %>% 
   summarise(flow_component = toString(unique(flow_component))) %>% 
   ungroup() 
+#check to see if subbasins with no alteration - no because all have peak alteration
+component.sub.unaltered <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
+  filter(is.na(component_alteration)) %>%
+  group_by(New_Name) %>% 
+  summarise(flow_component = toString(unique(flow_component))) %>% 
+  ungroup() 
+
 
 #save as data.frame
 component.sub.df <- data.frame(component.sub)
@@ -638,12 +665,12 @@ unique(component.sub.unaltered.df$component_alteration)
 
 #combine with basins shapefile again
 comp_alt_synth <- component.sub.df %>% 
-  inner_join(basins, by = c('New_Name')) %>% 
-  inner_join(source, by = c('New_Name'))
+  inner_join(basins, by = c('New_Name')) #%>% 
+  #inner_join(source, by = c('New_Name'))
 comp_alt_synth
 
 #set new flow component alteration synthesis names
-comp_alt_synth$flow_component <- gsub(" base flow", "", comp_alt_synth$flow_component)
+comp_alt_synth$flow_component <- gsub(" baseflow", "", comp_alt_synth$flow_component)
 comp_alt_synth$flow_component <- gsub("flow", "Flow", comp_alt_synth$flow_component)
 #find unique combos that need to be updated
 unique(comp_alt_synth$flow_component)
@@ -655,18 +682,27 @@ comp_alt_synth$flow_component[comp_alt_synth$flow_component == "Peak Flow, Dry-s
 
 unique(comp_alt_synth$flow_component)
 
-comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
+# comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
+# colors <- c("#d7191c", "#fdae61", "#2c7bb6")
+# levels <- c("All", "Dry-season, Peak Flow", "Peak Flow")
+
+# comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
+# colors <- c("#a50f15", "#fff7bc", "#d95f0e", "#fdae61", "#2c7bb6")
+# levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+
+comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All",  "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
+colors <- c("#d7191c", "#fdae61", "#fff7bc", "#2c7bb6")
+levels <- c("All", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+
 
 #colors <- c("#ca0020", "#fdb863", "#5e3c99", "#a6dba0", "#b2abd2")
 #levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
-colors <- c("#d7191c", "#fdae61", "#2c7bb6")
-levels <- c("All", "Dry-season, Peak Flow", "Peak Flow")
 
 #base map 
 study2 <- ggplot(basins) + 
   geom_sf(color = "lightgrey", fill="white") +
   #geom_sf(color = "#969696", fill="white") +
-  labs(title="Hydrologic Alteration Synthesis", subtitle = "Wet and Dry Season Base-flow, Peak Flow",x ="", y = "")  + 
+  labs(title="Hydrologic Alteration Synthesis", subtitle = "Wet and Dry Season Baseflow, Peak Flow",x ="", y = "")  + 
   annotation_scale() +
   annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
                          width = unit(.8, "cm")) +
@@ -680,8 +716,8 @@ study2
 
 #make sure ref subbasins have NA
 #for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
-comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-040"] <- NA
-comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-041"] <- NA
+#comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-040"] <- NA
+#comp_alt_synth$altered_components[comp_alt_synth$New_Name == "L02-041"] <- NA
 
 
 #synthesis map
@@ -689,17 +725,17 @@ syn.plot <- study2 + geom_sf(data = comp_alt_synth, color= "gray89", aes(fill=al
   scale_fill_manual(name = "Alterated Components", labels = levels, values=colors) +
   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
-#add in model source
-syn.plot2 <- syn.plot + geom_sf(data = comp_alt_synth, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
-  scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
-  geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+# #add in model source
+# syn.plot2 <- syn.plot + geom_sf(data = comp_alt_synth, size = 1, fill = NA, aes(color=Source, geometry = geometry)) +
+#   scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
+#   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 
 #print
-print(syn.plot2)
+print(syn.plot)
 
 #save image
-plot.fname <- paste0(dir.alt, "Synthesis_Alteration_Map_wetdrypeak.jpg")
+plot.fname <- paste0(dir.alt, "Synthesis_Alteration_Map_wetdrypeak_allsubbasins.jpg")
 ggsave(syn.plot, file=plot.fname, dpi=400, height=6, width=8)
 
 
