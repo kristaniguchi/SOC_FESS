@@ -1,5 +1,6 @@
 #Apply rating curves to the discharge data from LSPC model
 #for every subbasin, loop through read in hydraulic rating curve data, use approxfun to interpolate hyd variables based on flow
+  #also processes hydraulics for the low-flow bias corrected data and saves that in the hydraulics outputs folder (instead of unprocessed data)
   #need different script to translate Aliso climate scenarios
 
 #load libraries
