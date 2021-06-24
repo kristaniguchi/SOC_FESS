@@ -1,4 +1,4 @@
-#Future Climate scenarios
+#Future Climate scenarios - Aliso Creek
   #script to process future climate scenarios (daily, 2030-2060) in comparison to historical (daily, 1989-2005)
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
@@ -14,6 +14,7 @@ library("scales")
 library("purrr")
 library("plyr")
 library("tidyverse")
+library("filesstrings")
 
 #my token for FFC API Client
 mytoken <- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJLcmlzIiwibGFzdE5hbWUiOiJUYW5pZ3VjaGkgUXVhbiIsImVtYWlsIjoia3Jpc3RpbmV0cUBzY2N3cnAub3JnIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE1NzM4NjgwODN9.UJhTioLNNJOxvY_PYb_GIbcMRI_qewjkfYx-usC_7ZA"
@@ -66,9 +67,12 @@ fnames <- fnames[fnames!= "stream.out"]
 #fnames.ref <- list.files(hist.dir, pattern = "\\.out$", full.names=TRUE)
 
 #empty df for alteration determination and direction
-alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
-names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
+alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=10))
+names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes", "gcm")
 
+#empty df for percentiles under various gcms and time periods - can use this to calculate change in percentiles from historical to mid-century
+percentiles.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=12))
+names(percentiles.df.overall) <- c("p10", "p25", "p50", "p75", "p90", "metric", "comid", "result_type", "source2", "gcm", "timeperiod", "subbasin.model")
 
 #update to loop through diff subdirs for each gcm 
 for(k in 1:length(future.subdir)){
@@ -76,6 +80,42 @@ for(k in 1:length(future.subdir)){
   setwd(future.subdir[k])
   #gcm k
   gcm.k <- gcms[k]
+  
+  ###########################################################################
+  #First save the low flow bias corrected data to replace the original files, save original as not corrected
+  #list files in directory
+  dir.files <- list.files(future.subdir[k])
+  dir.files.long <- list.files(future.subdir[k], full.name = TRUE)
+  #bias directory files
+  bias.dir <- list.files(future.subdir[k], full.name = TRUE, pattern="low.flow.bias")
+  
+  #list files in bias.dir to get files names and move over files in dir.files to a new directory of original files
+  bias.files <- list.files(bias.dir)
+  bias.files.long <- list.files(bias.dir, full.name = TRUE, pattern=".out")
+  #find files indices that match in hyd directory
+  old.files <- dir.files.long[dir.files %in% bias.files] 
+  #create new directoy to move old files into
+  old.dir.create <- paste0(bias.dir, "/original.not.corrected/")
+  dir.create(old.dir.create)
+  #move old files not corrected into created dir original.not.corrected
+  file.move(old.files, old.dir.create)
+  #copy bias corrected to main dir
+  file.copy(bias.files.long, future.subdir[k])
+  
+  ##UPDATE: replace 201080 with 201079 if 201079 file still exists, rename 201080 original to old file
+  if(length(grep("201079", fnames)) > 0 ){
+    #old filenames
+    old.name.curr <- paste0(curr.dir, "201080.out")
+    old.name.ref <- paste0(ref.dir, "201080.out")
+    #rename 201080 to 201080_old for curr and ref
+    file.rename(old.name.curr, paste0(curr.dir, "201080_old.out"))
+    file.rename(old.name.ref, paste0(ref.dir, "201080_old.out"))
+    #rename 201079 to 201080 curr and ref
+    file.rename(paste0(curr.dir, "201079.out"), paste0(curr.dir, "201080.out"))
+    file.rename(paste0(ref.dir, "201079.out"), paste0(ref.dir, "201080.out"))
+  }
+  ###########################################################################
+  
   
   #loop through each subbasin output file for gcm.k
   for (i in 1:length(fnames)){
@@ -144,6 +184,14 @@ for(k in 1:length(future.subdir)){
     write.csv(future.results.ffm.all, file=paste0(dir.new,"/future.results.ffm.all.", gcm.k,".csv"), row.names=FALSE)
     write.csv(future.drh.data, file=paste0(dir.new,"/future.drh.data.", gcm.k,".csv"), row.names=FALSE)
     
+    #save future percentiles in overall df
+    #add column for "gcm", "timeperiod", "subbasin.model"
+    future.percentiles.all$gcm <- gcm.k
+    future.percentiles.all$timeperiod <- "future"
+    future.percentiles.all$subbasin.model <- subbasin.model
+    #save in overall df
+    percentiles.df.overall <- data.frame(rbind(percentiles.df.overall, future.percentiles.all))
+    
     ################################################
     ####LSPC historical data in comparison to future climate run######
     
@@ -181,7 +229,6 @@ for(k in 1:length(future.subdir)){
     historical.percentiles.all <- results.historical$ffc_percentiles
     historical.percentiles.all$source2 <- rep("LSCP\nHistorical", length(historical.percentiles.all$p10))
     historical.results.ffm.all <- results.historical$ffc_results
-    historical.results.ffm.all$type <- "historical"
     historical.drh.data <- results.historical$drh_data
     
     #write outputs to dir
@@ -190,6 +237,13 @@ for(k in 1:length(future.subdir)){
     write.csv(historical.results.ffm.all, file=paste0(dir.new,"/historical.results.ffm.all.", gcm.k, ".csv"), row.names=FALSE)
     write.csv(historical.drh.data, file=paste0(dir.new,"/historical.drh.data.",  gcm.k, ".csv"), row.names=FALSE)
     
+    #save historical percentiles in overall df
+    #add column for "gcm", "timeperiod", "subbasin.model"
+    historical.percentiles.all$gcm <- gcm.k
+    historical.percentiles.all$timeperiod <- "historical"
+    historical.percentiles.all$subbasin.model <- subbasin.model
+    #save in overall df
+    percentiles.df.overall <- data.frame(rbind(percentiles.df.overall, historical.percentiles.all))
     
     ############################
     ###Alteration Determination between future and historical LSPC
@@ -257,6 +311,8 @@ for(k in 1:length(future.subdir)){
     #save into alteration data frame
     comid.notes <- as.character(sub$Notes)
     alteration.comparison.df <- data.frame(cbind(COMID, subbasin.model, subbasin, ffm, alteration.status, alteration.direction, alteration.status.statewide, alteration.direction.statewide,comid.notes))
+    #add gcm column
+    alteration.comparison.df$gcm <- gcm.k
     write.csv(alteration.comparison.df, file=paste0(dir.new,"/",subbasin.model, "_alteration_comparison_future_historical_statewide", gcm.k,".csv"),row.names=FALSE)
     
     #save alteration in overall df
@@ -336,4 +392,6 @@ for(k in 1:length(future.subdir)){
 }
 
 
-#see XXX.R for 
+##omit first row of nA values for 
+alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$p10),]
+percentiles.df.overall <- percentiles.df.overall[2:length(percentiles.df.overall$p10),]
