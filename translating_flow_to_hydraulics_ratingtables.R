@@ -57,6 +57,9 @@ library("filesstrings")
 #combine all flow directories and loop through them to translate flow to hydraulics for each senario
 flow.dir <- c(flow.dir1, flow.dir2, flow.dir3, flow.dir4, flow.dir5, flow.dir6, flow.dir7, flow.dir8, flow.dir9, flow.dir10, flow.dir11, flow.dir12, flow.dir13, flow.dir14, flow.dir15, flow.dir16, flow.dir17)
 
+#or only one directory set here
+#flow.dir <- flow.dir2 #aliso water conservation
+
 #lookup table with X_Sect_ID, Reach.ID (used for wildermuth), LSPC.ID
 #model reach values (slope, manning's n)
 reach.metrics <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
@@ -79,8 +82,8 @@ param.sites <- lookup[as.numeric(lookup$Slope) > 0,]
 #empty vector to write xs with no geom data and rating curves generated
 no.xs.geom <- NA
 
-#for(j in 1:length(flow.dir)){
-for(j in 10:length(flow.dir)){
+for(j in 1:length(flow.dir)){
+#for(j in 10:length(flow.dir)){
   #list files in directory
   list.files <- list.files(flow.dir[j], full.names = TRUE, pattern ="\\.out$", ignore.case = TRUE)
   subbasins <- list.files(flow.dir[j], pattern ="\\.out$", ignore.case = TRUE) %>% 
@@ -153,13 +156,7 @@ for(j in 10:length(flow.dir)){
     if(length(ind.bias)>0){
       skip = 1
     }else{
-      #if Aliso water conservation scenario outputs skip 24, all others skip 23
-      outdir.subbasin.name <- grep("Aliso_Water_Conservation", flow.dir[j])
-      if(length(outdir.subbasin.name > 0)){
-        skip = 24
-      }else{
-        skip = 23
-      }
+      skip = 23
     }
     #read in discharge data
     q.data <- read.table(list.files[i], skip=skip)
@@ -244,7 +241,7 @@ for(j in 10:length(flow.dir)){
 #hydraulic directories
 hyd.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/"
 hyd.files.all <- list.files(hyd.dir, full.name = TRUE)
-hyd.files <- hyd.files.all[1:10]
+hyd.files <- hyd.files.all[5]
 
 #loop through all directories and take bias corrected and replace old files, save not corrected files in new directory for backup
 
@@ -264,7 +261,7 @@ for(f in 1:length(hyd.files)){
   old.dir.create <- paste0(bias.dir, "/original.not.corrected/")
   dir.create(old.dir.create)
   #move old files not corrected into created dir original.not.corrected
-  file.move(old.files, old.dir.create)
+  file.move(old.files, old.dir.create, overwrite = TRUE)
   #copy bias corrected to main dir
   file.copy(bias.files.long, hyd.files[f])
   
