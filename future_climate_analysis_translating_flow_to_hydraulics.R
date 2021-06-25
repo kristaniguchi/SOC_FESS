@@ -149,7 +149,7 @@ for(j in 1:length(flow.dir)){
 
     #read in discharge data
     q.data <- read.table(list.files[i], skip=skip)
-    names(q.data) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow", "av.depth", "hyd.radius", "av.velocity", "flow.cfs")
+    names(q.data) <- c("gage", "year", "month", "day", "hour", "min", "precip", "av.depth", "hyd.radius", "av.velocity", "flow.cfs")
     #format date
     #update to date.time since hourly data
     #add leading zero to hour
@@ -250,7 +250,7 @@ for(f in 1:length(hyd.files)){
   old.dir.create <- paste0(bias.dir, "/original.not.corrected/")
   dir.create(old.dir.create)
   #move old files not corrected into created dir original.not.corrected
-  file.move(old.files, old.dir.create)
+  file.move(old.files, old.dir.create, overwrite=TRUE)
   #copy bias corrected to main dir
   file.copy(bias.files.long, hyd.files[f])
   
