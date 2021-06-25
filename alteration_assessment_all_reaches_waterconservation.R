@@ -30,16 +30,16 @@ set_token(mytoken)
 
 ####UPDATE: directories for water conservation LSCP, reference LSPC
 #Aliso
-#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/"
-#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
+water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
 #aliso water conservation directory name
-#alt.dir.name <- "Aliso_Water_Conservation_Scenario/"
+alt.dir.name <- "Aliso_Water_Conservation_Scenario/"
 
 #Oso and other coastal watersheds
-water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201119_Oso,_Small_Creeks_Water_Conservation_Scenario/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
+#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201119_Oso,_Small_Creeks_Water_Conservation_Scenario/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
 #alteration oso recalibration directory name
-alt.dir.name <- "Oso_SmallCreeks_Water_Conservation/"
+#alt.dir.name <- "Oso_SmallCreeks_Water_Conservation/"
 
 #San Juan
 #water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Water_Conservation/"
@@ -58,7 +58,7 @@ dir.create(alteration.dir)
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
 
 #lookuptable to convert subbasin codes for model output subbasin names
-subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
+subbasin_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/Old_Runs/191220_Interim_Calibration/site_name_lookupletternumbers.csv")
 
 ##############################
 #convert basin orig name to outputfile name (model subbasin name)
@@ -105,6 +105,18 @@ ind.old <- grep("old", fnames)
 if(length(ind.old) > 0){
   fnames <- fnames[-ind.old]
 }
+
+# #find subbasins with no COMID match (San Juan 401101 BELL CANYON missing subbasin, do not run FFC for this one)
+# #find subbasin names that we have output files for
+# subbasins <- as.numeric(gsub(".out", "", fnames))
+# #find which subbasin files we don't have comids for
+# missing.subbasin <- setdiff(subbasins, basin_comid_lookup$new.subbasinname)
+# #exclude missing subbasin
+# ind.missing <- grep(missing.subbasin, fnames)
+# #exclude missing subbasin
+# if(length(ind.missing) > 0){
+#   fnames <- fnames[-ind.missing]
+# }
 
 #empty df for alteration determination and direction
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
