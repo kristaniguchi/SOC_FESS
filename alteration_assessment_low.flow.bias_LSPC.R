@@ -454,15 +454,14 @@ for (i in 1:length(fnames)){
 }
 
 
-#Alteration based on flow component:
-#if one metric in component is altered, component is considered altered
+#############################################################################################################################################
 
 #Only rerun this if you do not want to run entire script above but have already done so previously
 #loop through all dirs and combine alteration df with overall df (since started at i 19 in loop above)
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
-dir.ffm <- paste0(curr.dir, "daily/FFMs/" )
+dir.ffm <- paste0(water.con.dir, "daily/FFMs/" )
 list <- list.files(dir.ffm, full.names = TRUE)
 
 for(y in 1:length(list)){
@@ -477,6 +476,11 @@ for(y in 1:length(list)){
 
 #backup.alteration.df.overall <- alteration.df.overall
 #alteration.df.overall <- backup.alteration.df.overall
+#############################################################################################################################################
+
+
+#Alteration based on flow component:
+#if one metric in component is altered, component is considered altered
 
 #if first site is NA, remove first row
 if(is.na(unique.sites[1])){
