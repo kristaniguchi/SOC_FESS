@@ -2,6 +2,8 @@
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
 #Note: 201080 is updated to 201079 - didn't include English trib, Delete 201080 trib file and replace with 201079
+#If COMID is missing from stream type in FFC, hardwired the COMID to a RGW since all should be ran with those parameters, previously used FFC defaults
+
 
 #load library
 library("devtools")
@@ -36,10 +38,17 @@ set_token(mytoken)
 #alt.dir.name <- "Aliso_RecalibrationUpdate/"
 
 #Oso and other coastal watersheds
-curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
+#curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
 #oso recalibration directory name
-alt.dir.name <- "Oso_SmallCreeks/"
+#alt.dir.name <- "Oso_SmallCreeks/"
+
+#San Juan - LSPC
+curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Existing_Conditions/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/"
+#San Juan directory name
+alt.dir.name <- "SanJuan_LSPC/"
+
 
 #alteration directory
 alteration.dir <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/", alt.dir.name)
@@ -103,6 +112,11 @@ if(length(ind.old) > 0){
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
+#empty vector of missing COMID from stream_class_data
+missing.comid.streamclass <- NA
+missing.comid.streamclass.subbasinmodel <- NA
+
+
 #empty vector if FFC error:
 ffc.errors <- NA
 
@@ -115,6 +129,16 @@ for (i in 1:length(fnames)){
   gage.name <- sub$Gage
   subbasin <- as.character(sub$Subbasin)
   COMID <- sub$COMID_forcalc
+  #find if COMID is missing from stream_class_data
+  ind.comid <- grep(COMID, stream_class_data$COMID)
+  #if length of ind.comid == 0 then add new row with COMID and "RGW"
+  if(length(ind.comid) == 0){
+    #save missing COMID and associated subbasin
+    missing.comid.streamclass <- c(missing.comid.streamclass, COMID)
+    missing.comid.streamclass.subbasinmodel <- c(missing.comid.streamclass.subbasinmodel, subbasin.model)
+    #change comid to one that works with RGW
+    COMID <- 20350507 #a comid that works that is also RGW
+  }
   
   
   ################################################
