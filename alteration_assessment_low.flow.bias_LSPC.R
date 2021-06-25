@@ -114,6 +114,11 @@ if(length(ind.old) > 0){
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
+#empty vector of missing COMID from stream_class_data
+missing.comid.streamclass <- NA
+missing.comid.streamclass.subbasinmodel <- NA
+
+
 #empty vector if FFC error:
 ffc.errors <- NA
 
@@ -126,6 +131,16 @@ for (i in 1:length(fnames)){
   gage.name <- sub$Gage
   subbasin <- as.character(sub$Subbasin)
   COMID <- sub$COMID_forcalc
+  #find if COMID is missing from stream_class_data
+  ind.comid <- grep(COMID, stream_class_data$COMID)
+  #if length of ind.comid == 0 then add new row with COMID and "RGW"
+  if(length(ind.comid) == 0){
+    #save missing COMID and associated subbasin
+    missing.comid.streamclass <- c(missing.comid.streamclass, COMID)
+    missing.comid.streamclass.subbasinmodel <- c(missing.comid.streamclass.subbasinmodel, subbasin.model)
+    #change comid to one that works with RGW
+    COMID <- 20350507 #a comid that works that is also RGW
+  }
   
   
   ################################################
