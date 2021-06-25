@@ -42,7 +42,23 @@ for(i in 1:length(timeperiod.dirs)){
   for(j in 1:length(gcm.dirs)){
     #files in gcm directori j
     fnames <- list.files(gcm.dirs[j], full.names = TRUE)
-    fnames.short <- list.files(gcm.dirs, pattern = ".out")
+    #set working directory
+    setwd(gcm.dirs[j])
+    
+    #before correcting update wrong subbasin names
+    #UPDATE: replace 201080 with 201079 if 201079 file still exists, rename 201080 original to old file
+    if(length(grep("201079", fnames)) > 0 ){
+      #old filenames
+      old.name <- paste0(gcm.dirs[j], "/201080.out")
+      new.name <- paste0(gcm.dirs[j], "/201080_old.out")
+      #rename 201080 to 201080_old for curr and ref
+      file.rename(old.name, new.name)
+      #rename 201079 to 201080 curr and ref
+      file.rename(paste0(gcm.dirs[j], "/201079.out"), paste0(gcm.dirs[j], "/201080.out"))
+    }
+    
+    #find filenames short to be post-processed
+    fnames.short <- list.files(gcm.dirs[j], pattern = ".out")
     fnames.short <- gsub(".out", "", fnames.short)
     
     #create new directory with bias corrected flow to be saved
@@ -69,7 +85,7 @@ for(i in 1:length(timeperiod.dirs)){
 
       #load in daily model for timeperiod i, gcm j, subbasin k
       curr <- read.table(paste0(fnames[k]), skip=skip)
-      names(curr) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow", "av.depth", "hyd.radius", "av.velocity", "flow.cfs")
+      names(curr) <- c("gage", "year", "month", "day", "hour", "min", "precip", "av.depth", "hyd.radius", "av.velocity", "flow.cfs")
       #format date
       #add leading zero to hour
       MONTH <- sprintf("%02d",curr$month)
@@ -102,10 +118,7 @@ for(i in 1:length(timeperiod.dirs)){
       write.table(curr, row.names = FALSE, file = filename)
       
     }
-    
   }
 }
-
-
 
 
