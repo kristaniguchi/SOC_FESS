@@ -32,6 +32,9 @@ gcms <- list.files(future.dir)
 output.dir <- "D:/SOC_FlowEcologyStudy/FutureClimateScenarios_06232021"
 #create output directory
 dir.create(output.dir)
+#create new directory to save ffm outputs
+dir.ffm <- paste0(output.dir,"/FFMs")
+dir.create(dir.ffm)
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
@@ -64,6 +67,8 @@ fnames <- list.files(ex.dir, pattern = "\\.out$")
 #exclude landuse and stream .out files
 fnames <- fnames[fnames!= "landuse.out"]
 fnames <- fnames[fnames!= "stream.out"]
+#exclude old file
+fnames <- fnames[fnames!= "201080_old.out"]
 #fnames.ref <- list.files(hist.dir, pattern = "\\.out$", full.names=TRUE)
 
 #empty df for alteration determination and direction
@@ -73,6 +78,11 @@ names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", 
 #empty df for percentiles under various gcms and time periods - can use this to calculate change in percentiles from historical to mid-century
 percentiles.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=12))
 names(percentiles.df.overall) <- c("p10", "p25", "p50", "p75", "p90", "metric", "comid", "result_type", "source2", "gcm", "timeperiod", "subbasin.model")
+
+#empty vector of missing COMID from stream_class_data
+missing.comid.streamclass <- NA
+missing.comid.streamclass.subbasinmodel <- NA
+
 
 #update to loop through diff subdirs for each gcm 
 for(k in 1:length(future.subdir)){
@@ -110,6 +120,17 @@ for(k in 1:length(future.subdir)){
     gage.name <- sub$Gage
     subbasin <- as.character(sub$Subbasin)
     COMID <- sub$COMID_forcalc
+    #find if COMID is missing from stream_class_data
+    ind.comid <- grep(COMID, stream_class_data$COMID)
+    #if length of ind.comid == 0 then add new row with COMID and "RGW"
+    if(length(ind.comid) == 0){
+      #save missing COMID and associated subbasin
+      missing.comid.streamclass <- c(missing.comid.streamclass, COMID)
+      missing.comid.streamclass.subbasinmodel <- c(missing.comid.streamclass.subbasinmodel, subbasin.model)
+      #change comid to one that works with RGW
+      COMID <- 20350507 #a comid that works that is also RGW
+    }
+    
     #number of rows to skip in output files
     skip=24
     
@@ -146,6 +167,9 @@ for(k in 1:length(future.subdir)){
     results.future$set_up(timeseries=data.future,
                         token=mytoken,
                         comid = COMID)
+    #set to "RGW" stream class for all --> every COMID is in this class in SOC
+    results.future$stream_class <- "RGW"
+    
     #then run
     results.future$run()
     
@@ -156,7 +180,7 @@ for(k in 1:length(future.subdir)){
     #predicted results, LSPC future
     future.alteration.all <- results.future$alteration
     future.percentiles.all <- results.future$ffc_percentiles
-    future.label <- paste0("LSPC\n", gcm.k)
+    future.label <- paste0("LSPC\n", gcm.k, "\nMid-Century")
     future.percentiles.all$source2 <- rep(future.label, length(future.percentiles.all$p10))
     future.results.ffm.all <- results.future$ffc_results
     future.results.ffm.all$type <- "future"
@@ -211,7 +235,8 @@ for(k in 1:length(future.subdir)){
     #save output df
     historical.alteration.all <- results.historical$alteration #using statewide percentiles
     historical.percentiles.all <- results.historical$ffc_percentiles
-    historical.percentiles.all$source2 <- rep("LSCP\nHistorical", length(historical.percentiles.all$p10))
+    historical.label <- paste0("LSCP\n", gcm.k, "\nHistorical")
+    historical.percentiles.all$source2 <- historical.label
     historical.results.ffm.all <- results.historical$ffc_results
     historical.drh.data <- results.historical$drh_data
     
@@ -313,6 +338,12 @@ for(k in 1:length(future.subdir)){
       sub.future.comp <- future.percentiles.all[as.character(future.percentiles.all$metric) %in%  as.character(ffm.names.m$flow_metric),]
       sub.historical.lspc.comp <- historical.percentiles.all [as.character(historical.percentiles.all $metric) %in%  as.character(ffm.names.m$flow_metric),]
       sub.ref.statewide.comp <- ref.percentiles[as.character(ref.percentiles$metric) %in%  as.character(ffm.names.m$flow_metric),]
+      #add in gcm, timeperiod, and subbasin.model
+      sub.ref.statewide.comp$gcm <- "NA"
+      sub.ref.statewide.comp$timeperiod <- "statewide ref"
+      sub.ref.statewide.comp$subbasin.model <- subbasin.model
+      
+      
       
       #Boxplots for components
       title <- as.character(ffm.names.m$title_component[1]) #component
@@ -326,7 +357,7 @@ for(k in 1:length(future.subdir)){
         full_join(sub.ref.statewide.comp, by=mergeCols) %>% 
         merge(ffm.labels, by="metric")
       #save as factor and set levels for source2
-      percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c(future.label,"LSCP\nHistorical","Statewide\nReference"))
+      percentiles.cbind.all$source2 <- factor(percentiles.cbind.all$source2, levels = c(future.label,historical.label,"Statewide\nReference"))
       
       #subset percentiles for component only
       percentiles.cbind.all.sub.m <- percentiles.cbind.all[percentiles.cbind.all$metric %in% as.character(ffm.names.m$flow_metric),] #%>%
@@ -350,7 +381,7 @@ for(k in 1:length(future.subdir)){
           geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
           scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
           labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-        print(P)
+        #print(P)
         #save as jpg
         component.2 <- gsub(" ", "_", title)
         plot.fname <- paste0(dir.new,"/",component.2, "_boxplots.jpeg")
@@ -364,7 +395,7 @@ for(k in 1:length(future.subdir)){
           geom_boxplot(stat = "identity") +  facet_wrap(~title_ffm, scales="free") +
           scale_fill_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a")) +
           labs(title=title,x ="", y = "", subtitle = subtitle.bp) 
-        print(P)
+        #print(P)
         #save as jpg
         component.2 <- gsub(" ", "_", title)
         plot.fname <- paste0(dir.new,"/",component.2, "_boxplots_", gcm.k,".jpeg")
@@ -380,4 +411,8 @@ for(k in 1:length(future.subdir)){
 alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$p10),]
 percentiles.df.overall <- percentiles.df.overall[2:length(percentiles.df.overall$p10),]
 
-#write 
+#write csv
+alteration.fname <- paste0(dir.ffm, "/alteration.FFM.future.climate.all.scenarios.csv")
+write.csv(alteration.df.overall, file=alteration.fname)
+percentiles.fname <- paste0(dir.ffm, "/percentiles.FFM.future.climate.all.scenarios.csv")
+write.csv(percentiles.df.overall, file=percentiles.fname)
