@@ -2,6 +2,7 @@
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
 #Note: 201080 is updated to 201079 - didn't include English trib, Delete 201080 trib file and replace with 201079
+#########Do not need to use this code anymore - can use alteration_assessment_all_reaches.R consistent format, can use
 
 #load library
 library("devtools")
