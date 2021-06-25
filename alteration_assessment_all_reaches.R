@@ -443,9 +443,7 @@ for (i in 1:length(fnames)){
 }
 
 
-#Alteration based on flow component:
-#if one metric in component is altered, component is considered altered
-
+##############################################################################################
 #Only rerun this if you do not want to run entire script above but have already done so previously
 #loop through all dirs and combine alteration df with overall df (since started at i 19 in loop above)
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
@@ -466,6 +464,9 @@ for(y in 1:length(list)){
 
 #backup.alteration.df.overall <- alteration.df.overall
 #alteration.df.overall <- backup.alteration.df.overall
+#############################################################################################################################################
+#component alteration summary
+#if one metric is altered, whole component altered
 
 #alteration DF
 unique.sites <- unique(alteration.df.overall$subbasin.model)

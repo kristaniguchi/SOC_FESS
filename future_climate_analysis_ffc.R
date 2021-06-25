@@ -2,8 +2,7 @@
   #script to process future climate scenarios (daily, 2030-2060) in comparison to historical (daily, 1989-2005)
   #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
   #alteration results will be saved as csvs
-
-####NEED TO UPDATE the missing subbasin.model "201079" , not in overall list
+#use separate code to run all the low flow bias corrected data since it's saved in different format
 
 
 #load library
@@ -30,8 +29,9 @@ future.subdir <- list.files(future.dir, full.names = TRUE)
 #list of gcm names
 gcms <- list.files(future.dir)
 #FFM output dir for future climate scenario analysis
-output.dir <- "D:/SOC_FlowEcologyStudy/FutureClimateScenarios"
-
+output.dir <- "D:/SOC_FlowEcologyStudy/FutureClimateScenarios_06232021"
+#create output directory
+dir.create(output.dir)
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
@@ -86,34 +86,18 @@ for(k in 1:length(future.subdir)){
   #list files in directory
   dir.files <- list.files(future.subdir[k])
   dir.files.long <- list.files(future.subdir[k], full.name = TRUE)
-  #bias directory files
-  bias.dir <- list.files(future.subdir[k], full.name = TRUE, pattern="low.flow.bias")
-  
-  #list files in bias.dir to get files names and move over files in dir.files to a new directory of original files
-  bias.files <- list.files(bias.dir)
-  bias.files.long <- list.files(bias.dir, full.name = TRUE, pattern=".out")
-  #find files indices that match in hyd directory
-  old.files <- dir.files.long[dir.files %in% bias.files] 
-  #create new directoy to move old files into
-  old.dir.create <- paste0(bias.dir, "/original.not.corrected/")
-  dir.create(old.dir.create)
-  #move old files not corrected into created dir original.not.corrected
-  file.move(old.files, old.dir.create)
-  #copy bias corrected to main dir
-  file.copy(bias.files.long, future.subdir[k])
-  
+
   ##UPDATE: replace 201080 with 201079 if 201079 file still exists, rename 201080 original to old file
-  if(length(grep("201079", fnames)) > 0 ){
+  if(length(grep("201079", dir.files)) > 0 ){
     #old filenames
-    old.name.curr <- paste0(curr.dir, "201080.out")
-    old.name.ref <- paste0(ref.dir, "201080.out")
+    old.name <- paste0(future.subdir[k], "/201080.out")
+    new.name <- paste0(future.subdir[k], "/201080_old.out")
     #rename 201080 to 201080_old for curr and ref
-    file.rename(old.name.curr, paste0(curr.dir, "201080_old.out"))
-    file.rename(old.name.ref, paste0(ref.dir, "201080_old.out"))
+    file.rename(old.name, new.name)
     #rename 201079 to 201080 curr and ref
-    file.rename(paste0(curr.dir, "201079.out"), paste0(curr.dir, "201080.out"))
-    file.rename(paste0(ref.dir, "201079.out"), paste0(ref.dir, "201080.out"))
+    file.rename(paste0(future.subdir[k], "/201079.out"), paste0(future.subdir[k], "/201080.out"))
   }
+  
   ###########################################################################
   
   
@@ -136,7 +120,7 @@ for(k in 1:length(future.subdir)){
     
     #load in daily model prediction
     future <- read.table(fnames[i], skip=skip)
-    names(future) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow","depth", "hyd.radius", "av.vel","flow.cfs")
+    names(future) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
     date <- paste(future$month, future$day, future$year, sep="/")
     #format date mm/dd/yyyy
@@ -198,7 +182,7 @@ for(k in 1:length(future.subdir)){
     #load in historical LSPC model for same subbasin.model
     #read in historical data
     historical <- read.table(paste0(hist.subdir[k],"/", fnames[i]), skip=skip)
-    names(historical) <- c("gage", "year", "month", "day", "hour", "min", "precip", "surf.outflow", "depth", "hyd.radius", "av.vel","flow.cfs")
+    names(historical) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
     date3 <- paste(historical$month, historical$day, historical$year, sep="/")
     #format date mm/dd/yyyy
@@ -395,3 +379,5 @@ for(k in 1:length(future.subdir)){
 ##omit first row of nA values for 
 alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$p10),]
 percentiles.df.overall <- percentiles.df.overall[2:length(percentiles.df.overall$p10),]
+
+#write 
