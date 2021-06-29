@@ -34,19 +34,19 @@ set_token(mytoken)
 #curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Recalibration_Update/Model_Output_WY1993-2019/low.flow.bias.corrected/"
 #ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/low.flow.bias.corrected/"
 #aliso recalibration directory name
-#alt.dir.name <- "low.flow.bias.all/"
+#alt.dir.name <- "low.flow.bias.all/Aliso_Recalibration_Update/"
 
 #Oso and other coastal watersheds
 #curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/low.flow.bias.corrected/"
 #ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/low.flow.bias.corrected/"
 #oso recalibration directory name
-#alt.dir.name <- "low.flow.bias.all/"
+#alt.dir.name <- "low.flow.bias.all/Oso_SmallCreeks"
 
 #San Juan - LSPC
 curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Existing_Conditions/low.flow.bias.corrected/"
 ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/low.flow.bias.corrected/"
 #san juan directory name
-alt.dir.name <- "low.flow.bias.all/"
+alt.dir.name <- "low.flow.bias.all/SanJuan_LSPC/"
 
 
 
