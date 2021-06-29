@@ -37,16 +37,16 @@ set_token(mytoken)
 #alt.dir.name <- "low.flow.bias.all/Aliso_Recalibration_Update/"
 
 #Oso and other coastal watersheds
-#curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/low.flow.bias.corrected/"
-#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/low.flow.bias.corrected/"
+curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Existing_Conditions/Model_Output_WY94-19/low.flow.bias.corrected/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/low.flow.bias.corrected/"
 #oso recalibration directory name
-#alt.dir.name <- "low.flow.bias.all/Oso_SmallCreeks"
+alt.dir.name <- "low.flow.bias.all/Oso_SmallCreeks"
 
 #San Juan - LSPC
-curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Existing_Conditions/low.flow.bias.corrected/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/low.flow.bias.corrected/"
+#curr.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Existing_Conditions/low.flow.bias.corrected/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/low.flow.bias.corrected/"
 #san juan directory name
-alt.dir.name <- "low.flow.bias.all/SanJuan_LSPC/"
+#alt.dir.name <- "low.flow.bias.all/SanJuan_LSPC/"
 
 
 
@@ -476,7 +476,7 @@ for (i in 1:length(fnames)){
 alteration.df.overall <- data.frame(matrix(data=NA, nrow=1, ncol=9))
 names(alteration.df.overall) <- c("COMID", "subbasin.model", "subbasin", "ffm", "alteration.status", "alteration.direction", "alteration.status.statewide", "alteration.direction.statewide","comid.notes")
 
-dir.ffm <- paste0(water.con.dir, "daily/FFMs/" )
+dir.ffm <- paste0(curr.dir, "daily/FFMs/" )
 list <- list.files(dir.ffm, full.names = TRUE)
 
 for(y in 1:length(list)){
@@ -516,14 +516,14 @@ alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, 
 alteration.df.overall.join$component_alteration <- gsub("indeterminate", NA, alteration.df.overall.join$component_alteration)
 
 #write overall alteration FFM
-write.csv(alteration.df.overall.join, file=paste0(alteration.dir, "ffm_alteration.df.overall.join.csv"), row.names=FALSE)
+write.csv(alteration.df.overall.join, file=paste0(alteration.dir, "/ffm_alteration.df.overall.join.csv"), row.names=FALSE)
 
 
 #synthesis component alteration
 ind.NA <- which(is.na(alteration.df.overall.join$component_alteration))
 component.alteration.subset <- alteration.df.overall.join[-ind.NA,]
 #write component alteration df
-write.csv(component.alteration.subset, file=paste0(alteration.dir, "component.alteration.df.overall.join.csv"), row.names=FALSE)
+write.csv(component.alteration.subset, file=paste0(alteration.dir, "/component.alteration.df.overall.join.csv"), row.names=FALSE)
 
 
 #combine flow alteration datasets from San Juan, Oso/SmallTribs, Aliso directories - percentiles and annual results existing condition
