@@ -1,8 +1,8 @@
-#Compile the percentiles from all directories
-  #Do it for all current, ref, [can we exclude subbasins in low flow bias first?] lowflow bias
+#Compile the percentiles and annual results from all directories
+  #Do it for all current, ref, water conservation and all lowflow bias corrected data
 #create empty data frames for results and percentiles making sure right columns to distinguish
   #loop through all directories and pull out percentiles and results, save into make sure has right scenario label (ref, current), subbasinmodel
-
+  #include low flow bias corrected data (in replace of uncorrected) and Oso outputs from the San Juan folder (subbasins ^40, do not use these outputs in Oso directory only San Juan)
 #do the same for current conditions, ref, water conservation, [future scenarios already have percentiles and results outputted as its own]
 
 ################################################################################################################
@@ -70,16 +70,16 @@ climate.dir.all <- c(climate.dir1, climate.dir1.lowflowbias)
 
 #Set scenario directory and output directory (alteration dir) to loop through
 # Current condition all
-scenario.dir.all <- current.dir.all #current condition all
-output.dir <- current.dir.alteration
+#scenario.dir.all <- current.dir.all #current condition all
+#output.dir <- current.dir.alteration
 
 # Reference condition all
 #scenario.dir.all <- ref.dir.all #reference condition all
 #output.dir <- reference.dir.alteration
 
 # Water Conservation all
-#scenario.dir.all <- watercon.dir.all #water conservation all
-#output.dir <- watercon.dir.alteration
+scenario.dir.all <- watercon.dir.all #water conservation all
+output.dir <- watercon.dir.alteration
 
 
 #create empty data frames to be saved for percentiles and annual results
@@ -113,7 +113,7 @@ for(i in 1:length(scenario.dir.all)){
     #only take subbasins that are not corrected for low flow bias
     subbasins.dir.i <- setdiff(subbasins.dir.all, low.flow.subbasins)
     #find the index of the folders that we want to use
-    ind.subbasins.use <- which(subbasins.dir.i %in% subbasins.dir.i)
+    ind.subbasins.use <- which(subbasins.dir.all %in% subbasins.dir.i)
     #list long paths for directy i for the index of the folders we want to use
     subbasins.dir.i.long <- list.files(scenario.dir.all[i], full.names = TRUE)[ind.subbasins.use]
     
