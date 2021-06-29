@@ -1,4 +1,4 @@
-#Component alteration synthesis summary table
+#Component alteration synthesis summary table for Current/Existing Conditions
   #create summary table for component alteration based on metric alteration script
 #combine with San Juan data
 
@@ -26,9 +26,19 @@ data3$subbasin <- as.character(data3$subbasin)
 
 
 #replace alteration data from low-flow bias
-data4 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/low.flow.bias.all/ffm_alteration.df.overall.join.csv")
+#Aliso low flow
+data4.1 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/low.flow.bias.all/Aliso_Recalibration_Update/ffm_alteration.df.overall.join.csv")
+#Oso low flow
+data4.2 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/low.flow.bias.all/Oso_SmallCreeks/ffm_alteration.df.overall.join.csv")
+#San Juan low flow
+data4.3 <- read.csv(file="L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/low.flow.bias.all/SanJuan_LSPC/ffm_alteration.df.overall.join.csv")
+#combine into data4
+data4 <- data.frame(rbind(data4.1, data4.2, data4.3))
 data4$subbasin.model <- as.character(data4$subbasin.model)
 data4$subbasin <- as.character(data4$subbasin)
+#omit NA rows
+NA.ind <- is.na(data4$subbasin.model)
+data4 <- data4[!NA.ind,]
 #get unique low flow bias sites, remove all non low flow bias corrected row values from delta1 to delta1 to 3, and then rbind
 unique.lowflow.sites <- unique(data4$subbasin.model)
 
