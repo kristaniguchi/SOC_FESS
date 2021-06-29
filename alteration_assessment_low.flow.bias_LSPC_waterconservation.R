@@ -31,22 +31,22 @@ set_token(mytoken)
 
 ####UPDATE: directories for Water Conservation LSCP, reference LSPC
 #Aliso
-water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/low.flow.bias.corrected/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/low.flow.bias.corrected/"
+#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/low.flow.bias.corrected/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/low.flow.bias.corrected/"
 #aliso recalibration directory name
-alt.dir.name <- "low.flow.bias.all.waterconservation/"
+#alt.dir.name <- "Water_Conservation_lowflowbias/Aliso_Recalibration_Update/"
 
 #Oso and other coastal watersheds
 #water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201119_Oso,_Small_Creeks_Water_Conservation_Scenario/low.flow.bias.corrected/"
 #ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/low.flow.bias.corrected/"
 #oso recalibration directory name
-#alt.dir.name <- "low.flow.bias.all.waterconservation/"
+#alt.dir.name <- "Water_Conservation_lowflowbias/Oso_SmallCreeks/"
 
 #San Juan - LSPC
-#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Water_Conservation/low.flow.bias.corrected/"
-#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/low.flow.bias.corrected/"
+water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Water_Conservation/low.flow.bias.corrected/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/low.flow.bias.corrected/"
 #san juan directory name
-#alt.dir.name <- "low.flow.bias.all.waterconservation/"
+alt.dir.name <- "Water_Conservation_lowflowbias/SanJuan_LSPC/"
 
 
 
