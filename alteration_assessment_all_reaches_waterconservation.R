@@ -30,22 +30,22 @@ set_token(mytoken)
 
 ####UPDATE: directories for water conservation LSCP, reference LSPC
 #Aliso
-water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/"
-ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
+#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Water_Conservation_Scenario/"
+#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201105_Aliso_Reference_Condition/WY94-Present/"
 #aliso water conservation directory name
-alt.dir.name <- "Aliso_Water_Conservation_Scenario/"
+#alt.dir.name <- "Water_Conservation/Aliso_Water_Conservation_Scenario/"
 
 #Oso and other coastal watersheds
 #water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201119_Oso,_Small_Creeks_Water_Conservation_Scenario/"
 #ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201118_Oso,_Small_Creeks_Reference_Condition/WY94-19/"
 #alteration oso recalibration directory name
-#alt.dir.name <- "Oso_SmallCreeks_Water_Conservation/"
+#alt.dir.name <- "Water_Conservation/Oso_SmallCreeks_Water_Conservation/"
 
 #San Juan
-#water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Water_Conservation/"
-#ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/"
+water.con.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Water_Conservation/"
+ref.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/210422_San_Juan_Reference_Condition/"
 #alteration oso recalibration directory name
-#alt.dir.name <- "San_Juan_Water_Conservation/"
+alt.dir.name <- "Water_Conservation/San_Juan_Water_Conservation/"
 
 
 #alteration directory
