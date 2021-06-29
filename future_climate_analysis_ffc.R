@@ -1,7 +1,7 @@
 #Future Climate scenarios - Aliso Creek
-  #script to process future climate scenarios (daily, 2030-2060) in comparison to historical (daily, 1989-2005)
-  #this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
-  #alteration results will be saved as csvs
+#script to process future climate scenarios (daily, 2030-2060) in comparison to historical (daily, 1989-2005)
+#this code will loop through each flow output file from LSPC, match model code with COMID, and evaluate alteration
+#alteration results will be saved as csvs
 #use separate code to run all the low flow bias corrected data since it's saved in different format
 
 
@@ -23,18 +23,16 @@ set_token(mytoken)
 #directory of LSPC future and historical model output results
 hist.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Climate_Scenario/Historical_WY75-05/"
 future.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/201111_Aliso_Climate_Scenario/RCP85_WY30-60/"
-#within each directory, need to go into subdirs for each GCM
+#within each directory, need to go into subdirs for each GCM, UPDATE HERE TO LOW FLOW BIAS
 hist.subdir <- list.files(hist.dir, full.names = TRUE)
 future.subdir <- list.files(future.dir, full.names = TRUE)
+
 #list of gcm names
 gcms <- list.files(future.dir)
 #FFM output dir for future climate scenario analysis
-output.dir <- "D:/SOC_FlowEcologyStudy/FutureClimateScenarios_06232021"
+output.dir <- "L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Future_Climate_Aliso" #UPDATE for laptop or desktop
 #create output directory
 dir.create(output.dir)
-#create new directory to save ffm outputs
-dir.ffm <- paste0(output.dir,"/FFMs")
-dir.create(dir.ffm)
 
 #read in information on subbasin and COMID
 basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpoints_NHD_comids.csv")
@@ -62,8 +60,7 @@ ffm.labels <- read.csv(filename)
 ffm.labels$metric <- ffm.labels$flow_metric
 
 #list of file names to loop through
-ex.dir <- paste0(hist.dir, "/CanESM2/")
-fnames <- list.files(ex.dir, pattern = "\\.out$")
+fnames <- list.files(hist.subdir[1], pattern = "\\.out$")
 #exclude landuse and stream .out files
 fnames <- fnames[fnames!= "landuse.out"]
 fnames <- fnames[fnames!= "stream.out"]
@@ -93,10 +90,10 @@ for(k in 1:length(future.subdir)){
   
   ###########################################################################
   #First save the low flow bias corrected data to replace the original files, save original as not corrected
-  #list files in directory
-  dir.files <- list.files(future.subdir[k])
-  dir.files.long <- list.files(future.subdir[k], full.name = TRUE)
-
+  #list files in future directory
+  dir.files <- list.files(future.subdir[k], pattern=".out")
+  dir.files.long <- list.files(future.subdir[k], full.name = TRUE, pattern=".out")
+  
   ##UPDATE: replace 201080 with 201079 if 201079 file still exists, rename 201080 original to old file
   if(length(grep("201079", dir.files)) > 0 ){
     #old filenames
@@ -108,11 +105,16 @@ for(k in 1:length(future.subdir)){
     file.rename(paste0(future.subdir[k], "/201079.out"), paste0(future.subdir[k], "/201080.out"))
   }
   
+  #list files in historical directory
+  dir.files.long.hist <- list.files(hist.subdir[k], full.name = TRUE, pattern=".out")
+  
+  
   ###########################################################################
   
   
   #loop through each subbasin output file for gcm.k
   for (i in 1:length(fnames)){
+    
     
     #get subbasin data i
     subbasin.model <- gsub(".out","", fnames[i])
@@ -139,8 +141,8 @@ for(k in 1:length(future.subdir)){
     
     #file name to read in
     
-    #load in daily model prediction
-    future <- read.table(fnames[i], skip=skip)
+    #load in daily model prediction fnames[i]
+    future <- read.table(paste0(future.subdir[k],"/", fnames[i]), skip=skip)
     names(future) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
     date <- paste(future$month, future$day, future$year, sep="/")
@@ -158,15 +160,21 @@ for(k in 1:length(future.subdir)){
     
     #calc FFMs and alteration for future data
     #create new directory to save ffm outputs
-    dir.new <- paste0(output.dir,"/FFMs/",subbasin.model)
+    #if first file, create FFM folder first
+    if(i==1){
+      ffm.dir <- paste0(future.subdir[k],"/FFMs")
+      dir.create(ffm.dir)
+    }
+    #create ffm subbasin output folder to save FFMs in 
+    dir.new <- paste0(future.subdir[k],"/FFMs/",subbasin.model)
     dir.create(dir.new)
-
+    
     #new FFC api set up
     results.future <- FFCProcessor$new()  # make a new object we can use to run the commands
     #setup
     results.future$set_up(timeseries=data.future,
-                        token=mytoken,
-                        comid = COMID)
+                          token=mytoken,
+                          comid = COMID)
     #set to "RGW" stream class for all --> every COMID is in this class in SOC
     results.future$stream_class <- "RGW"
     
@@ -205,7 +213,7 @@ for(k in 1:length(future.subdir)){
     
     #load in historical LSPC model for same subbasin.model
     #read in historical data
-    historical <- read.table(paste0(hist.subdir[k],"/", fnames[i]), skip=skip)
+    historical <- read.table(paste0(hist.subdir[k], "/", fnames[i]), skip=skip)
     names(historical) <- c("gage", "year", "month", "day", "hour", "min", "precip", "depth", "hyd.radius", "av.vel","flow.cfs")
     #format date
     date3 <- paste(historical$month, historical$day, historical$year, sep="/")
@@ -214,21 +222,30 @@ for(k in 1:length(future.subdir)){
     historical$date <- format(date4, "%m/%d/%Y")
     #format q to be numeric
     historical$flow.cfs <- as.numeric(as.character(historical$flow.cfs))
-
+    
     #create new data frame with date and mean daily flow to go into FFC
     data.historical <- data.frame(cbind(historical$date, historical$flow.cfs))
     names(data.historical) <- c("date", "flow")
     
     ################
     #calc FFMs and alteration for historical data
-    #save output in same directory 
-
+    #create new directory to save ffm outputs
+    #if first file, create FFM folder first
+    if(i==1){
+      ffm.dir.hist <- paste0(hist.subdir[k],"/FFMs")
+      dir.create(ffm.dir.hist)
+    }
+    #create ffm subbasin output folder to save FFMs in 
+    dir.new.hist <- paste0(hist.subdir[k],"/FFMs/",subbasin.model)
+    dir.create(dir.new.hist)
+    
+    
     #new FFC api set up
     results.historical <- FFCProcessor$new()  # make a new object we can use to run the commands
     #setup
     results.historical$set_up(timeseries=data.historical,
-                          token=mytoken,
-                          comid = COMID)
+                              token=mytoken,
+                              comid = COMID)
     #then run
     results.historical$run()
     
@@ -241,10 +258,10 @@ for(k in 1:length(future.subdir)){
     historical.drh.data <- results.historical$drh_data
     
     #write outputs to dir
-    write.csv(historical.alteration.all, file=paste0(dir.new,"/historical.alteration.statewide.all.csv"), row.names=FALSE)
-    write.csv(historical.percentiles.all, file=paste0(dir.new,"/historical.percentiles.all.", gcm.k,".csv"), row.names=FALSE)
-    write.csv(historical.results.ffm.all, file=paste0(dir.new,"/historical.results.ffm.all.", gcm.k, ".csv"), row.names=FALSE)
-    write.csv(historical.drh.data, file=paste0(dir.new,"/historical.drh.data.",  gcm.k, ".csv"), row.names=FALSE)
+    write.csv(historical.alteration.all, file=paste0(dir.new.hist,"/historical.alteration.statewide.all.csv"), row.names=FALSE)
+    write.csv(historical.percentiles.all, file=paste0(dir.new.hist,"/historical.percentiles.all.", gcm.k,".csv"), row.names=FALSE)
+    write.csv(historical.results.ffm.all, file=paste0(dir.new.hist,"/historical.results.ffm.all.", gcm.k, ".csv"), row.names=FALSE)
+    write.csv(historical.drh.data, file=paste0(dir.new.hist,"/historical.drh.data.",  gcm.k, ".csv"), row.names=FALSE)
     
     #save historical percentiles in overall df
     #add column for "gcm", "timeperiod", "subbasin.model"
@@ -412,7 +429,7 @@ alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$p1
 percentiles.df.overall <- percentiles.df.overall[2:length(percentiles.df.overall$p10),]
 
 #write csv
-alteration.fname <- paste0(dir.ffm, "/alteration.FFM.future.climate.all.scenarios.csv")
+alteration.fname <- paste0(output.dir, "/alteration.FFM.future.climate.all.scenarios.csv")
 write.csv(alteration.df.overall, file=alteration.fname)
-percentiles.fname <- paste0(dir.ffm, "/percentiles.FFM.future.climate.all.scenarios.csv")
+percentiles.fname <- paste0(output.dir, "/percentiles.FFM.future.climate.all.scenarios.csv")
 write.csv(percentiles.df.overall, file=percentiles.fname)
