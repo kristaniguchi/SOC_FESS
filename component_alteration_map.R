@@ -12,6 +12,7 @@ library(spData)
 #install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
 library(spDataLarge)
 library(dplyr)
+#install.packages("tidyverse")
 library(tidyverse)
 library(ggplot2)
 library(readxl)
@@ -45,8 +46,18 @@ comp_alt$New_Name <- comp_alt$subbasin
 #set levels for flow component so it goes in sequence of WY
 comp_alt$flow_component <- factor(comp_alt$flow_component, levels = c("Fall pulse flow", "Wet-season baseflow", "Peak flow", "Spring recession flow", "Dry-season baseflow"))
 
-#subbasin polygon shapefile
-basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
+#update component alteration to exclude peak magnitude alteration (Peak 2, 5, 10) - minus 3 altered metric for all peak components
+#find the row index of peak flow magnitude alteration
+ind.peak <- grep("Peak flow", comp_alt$flow_component)
+#for all peak mag rows, the n_ffm_altered is n_ffm_altered-3 (excluding peak mag alteration)
+comp_alt$n_ffm_altered[ind.peak] <- comp_alt$n_ffm_altered[ind.peak] - 3
+#update component_alteration if n_ffm_altered >1, likely altered, else 
+comp_alt$component_alteration[comp_alt$n_ffm_altered > 0] <- "likely_altered"
+#update component_alteration if n_ffm_altered == 0, likely unaltered 
+comp_alt$component_alteration[comp_alt$n_ffm_altered == 0] <- "likely_unaltered"
+
+#subbasin polygon shapefile - updated shapefile with Bell Canyon subbasin added
+basins <- st_read("data/Agg_Boundaries_v14.shp", quiet = T)
 #basins <- st_read('L:/San Juan WQIP_KTQ/Data/SpatialData/Model_Subbasins_Reaches/New_Subbasins_forSCCWRP_12062019/New_Subbasins_forSCCWRP/subbasin_boundaries_forSCCWRP.shp', quiet = T)
 basins2 <- basins %>% 
   inner_join(comp_alt, by = c('New_Name'))
@@ -277,6 +288,7 @@ sub1 <- ggplot(basins3[basins3$New_Name == unique.sites[1],]) +
 
 sub1
 #ggsave(sub1, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
+ggsave(sub1, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/subbasin1_compalteration.jpg", dpi=300, height=8, width=8)
 
 
 #create separate barplot for just the first item
@@ -328,7 +340,8 @@ bar <-  ggplot(mag.alt.n) +
   theme(axis.text=element_text(size=11))
 bar
 
-ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_mag.alteration.jpg", dpi=300, height=8, width=11)
+#ggsave(bar, filename="C:/Users/KristineT/Documents/Git/SOC_FESS/zoom_barplot_mag.alteration.jpg", dpi=300, height=8, width=11)
+ggsave(bar, filename="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/zoom_barplot_mag.alteration.jpg", dpi=300, height=8, width=11)
 
 
 
@@ -348,12 +361,20 @@ x
 
 #read in alteration summary table
 data <- read.csv(file=paste0(alteration.dir, "ffm_alteration.df.overall.join.Aliso.Oso.SmallCreeks.SanJuanLSPC.lowflowbias.csv"))
-#exclude the additive subbasins
-#data <- data[26:length(data$subbasin),]
+
+#####UPDATE: For peak magnitude metrics, put NA for now!
+#alteration status NA for peak mag metrics
+data$alteration.status[data$flow_component == "Peak flow" & data$flow_characteristic == "Magnitude (cfs)"] <- NA
+#alteration direction NA for peak mag metrics
+data$alteration.direction[data$flow_component == "Peak flow" & data$flow_characteristic == "Magnitude (cfs)"] <- NA
+
+
 #subset to altered only
 altered <- data[data$alteration.status == "likely_altered",]
 #remove NA
 altered <- altered[-which(is.na(altered$subbasin)),]
+
+
 
 #subset so if there is one altered characteristic per component (remove duplicates from one subbasin so we get number of subbasins with altered flow characteristics)
 unique.altered.sites <- unique(altered$subbasin.model)
@@ -395,7 +416,8 @@ mine.heatmap <- ggplot(data = ffm_summary, mapping = aes(x = flow_characteristic
 
 mine.heatmap
 
-ggsave(mine.heatmap, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration_allsubbasins.jpg", dpi=300, height=8, width=12)
+#ggsave(mine.heatmap, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration_allsubbasins.jpg", dpi=300, height=8, width=12)
+ggsave(mine.heatmap, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/heatmap_alteration_allsubbasins.jpg", dpi=300, height=8, width=12)
 
 #updated heatmap without frequency or ROC for annual report 2020/2021
 #find Frequency and Rate of change (%)
@@ -419,7 +441,8 @@ mine.heatmap2 <- ggplot(data = ffm_summary2, mapping = aes(x = flow_characterist
 
 mine.heatmap2
 
-ggsave(mine.heatmap2, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.allsubbasins.jpg", dpi=400, height=8, width=10)
+#ggsave(mine.heatmap2, file="C:/Users/KristineT/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.allsubbasins.jpg", dpi=400, height=8, width=10)
+ggsave(mine.heatmap2, file="C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/heatmap_alteration.nofreqROC.allsubbasins.jpg", dpi=400, height=8, width=10)
 
 
 
@@ -446,8 +469,9 @@ domain <- study + geom_sf(data = basins3, color = "red", fill="white", size = 1.
 geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
 
 #save domain map
-filename.domain <- paste0()
-ggsave(domain, file= "C:/Users/KristineT/Documents/Git/SOC_FESS/study_domain_allLSPC.jpg", dpi=400, height=6, width=8)
+#filename.domain <- paste0()
+#ggsave(domain, file= "C:/Users/KristineT/Documents/Git/SOC_FESS/study_domain_allLSPC.jpg", dpi=400, height=6, width=8)
+ggsave(domain, file= "C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/study_domain_allLSPC.jpg", dpi=400, height=6, width=8)
 
 ########################################################
 # FFM METRIC alteration maps
@@ -457,10 +481,6 @@ basins4 <- basins %>%
   inner_join(data, by = c('New_Name'))
 basins4
 
-#inner join with model source
-basins4 <- basins4 %>% 
-  inner_join(source, by = c('New_Name'))
-basins4
 
 #replace alteration category names
 basins4$alteration.status[basins4$alteration.status == "likely_altered"] <- "Likely Altered"
@@ -509,9 +529,6 @@ for(j in 1:length(unique.ffm)){
   #subset colors and status
   lookup.sub <- lookup[lookup$alteration.status.new %in% basins4.sub$alteration.status.new,]
   
-  #save as factor
-  lookup.sub$alteration.status.new <- factor(lookup.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
-  basins4.sub$alteration.status.new <- factor(basins4.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
   
   #find and replace names for timing low early, high late
   if(unique(basins4.sub$flow_characteristic) == "Timing (date)"){
@@ -521,6 +538,11 @@ for(j in 1:length(unique.ffm)){
     lookup.sub$alteration.status.new <- gsub("Likely Altered High", "Likely Altered Late", lookup.sub$alteration.status.new)
   }
   unique(basins4.sub$alteration.status.new)
+  
+  #save as factor
+  lookup.sub$alteration.status.new <- factor(lookup.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
+  basins4.sub$alteration.status.new <- factor(basins4.sub$alteration.status.new, levels = lookup.sub$alteration.status.new)
+  
   
   #base map 
   study2 <- ggplot(basins) + 
@@ -635,17 +657,28 @@ for(k in 1:length(uniq.comp)){
 
 #subset component alteration data to wet, dry, peak
 comp.synthesis <- c("Wet-season baseflow", "Peak flow", "Dry-season baseflow")
-component.sub <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
+component.sub <- c[comp_alt$flow_component %in% comp.synthesis,] %>% 
   filter(component_alteration == "likely_altered") %>%
   group_by(New_Name) %>% 
   summarise(flow_component = toString(unique(flow_component))) %>% 
   ungroup() 
-#check to see if subbasins with no alteration - no because all have peak alteration
+#check to see if subbasins with no alteration - some with all unaltered need to be added into component.sub as None
 component.sub.unaltered <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
-  filter(is.na(component_alteration)) %>%
+  filter(component_alteration == "likely_unaltered") %>%
   group_by(New_Name) %>% 
   summarise(flow_component = toString(unique(flow_component))) %>% 
   ungroup() 
+
+#identify the subbasins with 3 unaltered component 
+ind.unaltered <- grep("Wet-season baseflow, Peak flow, Dry-season baseflow", component.sub.unaltered$flow_component)
+subbasins.unaltered <- component.sub.unaltered$New_Name[ind.unaltered]
+setdiff(component.sub$New_Name, subbasins.unaltered)
+#subset component.sub.unaltered to only the unaltered basins
+component.sub.unaltered2 <- component.sub.unaltered[ind.unaltered,]
+#change flow_component to None
+component.sub.unaltered2$flow_component <- "None"
+#combine none latered with altered dataset
+component.sub <- rbind(component.sub, component.sub.unaltered2)
 
 
 #save as data.frame
@@ -686,13 +719,14 @@ unique(comp_alt_synth$flow_component)
 # colors <- c("#d7191c", "#fdae61", "#2c7bb6")
 # levels <- c("All", "Dry-season, Peak Flow", "Peak Flow")
 
-# comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
-# colors <- c("#a50f15", "#fff7bc", "#d95f0e", "#fdae61", "#2c7bb6")
-# levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+ comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season", "Wet-season", "Peak Flow", "None"))
+ colors <- c("#a50f15", "#d95f0e", "#fdae61", "#fff7bc", "#fee090", "pink", "#4575b4")
+ levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season", "Wet-season", "Peak Flow", "None")
 
-comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All",  "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
-colors <- c("#d7191c", "#fdae61", "#fff7bc", "#2c7bb6")
-levels <- c("All", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
+ #previous colors and categories
+# comp_alt_synth$altered_components <- factor(comp_alt_synth$flow_component, levels = c("All",  "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow"))
+# colors <- c("#d7191c", "#fdae61", "#fff7bc", "#2c7bb6")
+# levels <- c("All", "Wet-season, Peak Flow", "Dry-season, Peak Flow", "Peak Flow")
 
 
 #colors <- c("#ca0020", "#fdb863", "#5e3c99", "#a6dba0", "#b2abd2")
