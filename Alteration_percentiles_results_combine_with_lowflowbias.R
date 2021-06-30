@@ -3,7 +3,8 @@
 #create empty data frames for results and percentiles making sure right columns to distinguish
   #loop through all directories and pull out percentiles and results, save into make sure has right scenario label (ref, current), subbasinmodel
   #include low flow bias corrected data (in replace of uncorrected) and Oso outputs from the San Juan folder (subbasins ^40, do not use these outputs in Oso directory only San Juan)
-#do the same for current conditions, ref, water conservation, [future scenarios already have percentiles and results outputted as its own]
+#do the same for current conditions, ref, water conservation scenaios
+#[UPDATE to do: future scenarios already have percentiles and results outputted as its own but need to integrate low-flow bias into them]
 
 ################################################################################################################
 
