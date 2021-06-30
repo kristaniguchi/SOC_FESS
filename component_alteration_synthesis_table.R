@@ -1,6 +1,6 @@
 #Component alteration synthesis summary table for Current/Existing Conditions
   #create summary table for component alteration based on metric alteration script
-#combine with San Juan data
+#combine Aliso, San Juan, Oso and Small Creeks and low-flow bias corrected
 
 library("tidyverse")
 library("ggplot2")
