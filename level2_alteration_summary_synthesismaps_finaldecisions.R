@@ -29,31 +29,20 @@ library(rgeos)
 
 #load in data
 #ASCI/CSCI
-level2.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/"
-#fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed.csv") #update to directory
-fname <- paste0(level2.dir, "09_metric_suitability_tally_scaled_all_sites_June2021_subset.csv") #all lspc subbasins including San Juan and Oso/small tribs, Aliso
+
+#level 2 directory
+#level2.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/" #laptop
+level2.dir <- "C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/" #desktop
+#file name 
+fname <- paste0(level2.dir, "09_metric_suitability_tally_condensed_all_sites_current_June2021.csv") #all lspc subbasins including San Juan and Oso/small tribs, Aliso and low flow bias corrected data
 
 #read in suitability data 
 suit_data <- read.csv(fname)
 
 
-#Do not process wildermuth data for annual report
-#wildermuth data
-#fname.wildermuth <- paste0(level2.dir, "09_metric_suitability_tally_Wildermuth.csv")
-#read in wildermuth data 
-#suit_data_wildermuth <- read.csv(fname.wildermuth) %>% 
-  #rename(New_Name = site) #change site to New_Name to combine with other datasets
-#create alteration vector: change suitable and Altered to altered and unaltered
-#suit_data_wildermuth$alteration_75pct_time <- suit_data_wildermuth$Suitability
-#suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Altered"] <- "Altered"
-#suit_data_wildermuth$alteration_75pct_time[suit_data_wildermuth$Suitability == "Suitable"] <- "Unaltered"
-#only use 50% prob
-#suit_data_wildermuth <- suit_data_wildermuth[suit_data_wildermuth$Threshold == "Threshold50",]
-
-
 #UPDATE
 #set output directory
-out.dir <- paste0(level2.dir, "Suitability_Maps/", "prob50_75time/")
+out.dir <- paste0(level2.dir, "Suitability_Maps/", "prob25CSCI.75ASCI_75time_current/")
 #out.dir <- paste0(level3.dir, "Suitability_Maps/", "All_species_suit_class_wide_option2_strict_prob_shorter_time/")
 
 #read in information on subbasin and New_Name
@@ -61,7 +50,7 @@ basin_comid_lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/v13_pourpo
 
 #read in shapefiles subbasins and reaches
 #subbasin polygon shapefile
-basins <- st_read("data/subbasin_boundaries_forSCCWRP.shp", quiet = T)
+basins <- st_read("data/Agg_Boundaries_v14.shp", quiet = T)
 
 #reach polylines
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
@@ -112,6 +101,9 @@ suit_data2_50 <- data.frame(suit_data2) #dont need to subset since it already co
 suit_data2_50$alteration_75pct_time[suit_data2_50$Altered > 50] <- "Altered"
 suit_data2_50$alteration_75pct_time[suit_data2_50$Altered <= 50] <- "Unaltered"
 
+#write.csv table of altered metrics per subbasin and bio/threshold
+write.csv(suit_data2_50, file=paste0(level2.dir, "Level2_altered_metrics_results_50pcttimealtered.csv"))
+
 #### if 1 metric is altered, then all altered
 #aggregate site, Biol, Threshold, alteration_75pct_time
 subset.75pct.time <- suit_data2_50 %>% 
@@ -133,7 +125,7 @@ subset.75pct.time$overall.altered.2metric[which(subset.75pct.time$alteration_75p
 #########################
 
 #save csv
-file.name <- paste0(level2.dir, "summary.50prob.75pct.time.altered.2metrics_LSPC_All_06102021.csv")
+file.name <- paste0(level2.dir, "summary.50prob.75pct.time.altered.2metrics_LSPC_All_Current_06302021.csv")
 write.csv(subset.75pct.time, file=file.name, row.names = FALSE)
 
 
@@ -212,12 +204,12 @@ lookup <- data.frame(cbind(colors, priority, categories))
 
 #merge with basins
 subset.join <- synthesis.summary %>% 
-  full_join(basins, by = c('New_Name')) %>% 
-  inner_join(source, by = c('New_Name'))
+  full_join(basins, by = c('New_Name')) #%>% 
+  #inner_join(source, by = c('New_Name'))
 
 source2 <- synthesis.summary %>% 
-  inner_join(basins, by = c('New_Name')) %>% 
-  inner_join(source, by = c('New_Name'))
+  inner_join(basins, by = c('New_Name')) #%>% 
+  #inner_join(source, by = c('New_Name'))
 
 
   #plot
@@ -252,7 +244,7 @@ source2 <- synthesis.summary %>%
 
 
   #write plot
-  out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_LSPC_all_Aliso_Oso_small_creeks_SJ.jpg")
+  out.filename <- paste0(out.dir, "Synthesis_Prioritization_map_LSPC_all_Aliso_Oso_small_creeks_SJ_Current.jpg")
   ggsave(syn.plot, file = out.filename, dpi=500, height=6, width=8)
   
 
