@@ -1,4 +1,4 @@
-#Flow component alteration map - FFM maps, heat maps, synthesis
+#Flow component alteration map - FFM maps, heat maps, synthesis Existing Conditions maps
 
 #install.packages("ggsn")
 #install.packages("ggmap")
@@ -55,6 +55,8 @@ comp_alt$n_ffm_altered[ind.peak] <- comp_alt$n_ffm_altered[ind.peak] - 3
 comp_alt$component_alteration[comp_alt$n_ffm_altered > 0] <- "likely_altered"
 #update component_alteration if n_ffm_altered == 0, likely unaltered 
 comp_alt$component_alteration[comp_alt$n_ffm_altered == 0] <- "likely_unaltered"
+
+#setwd("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS")
 
 #subbasin polygon shapefile - updated shapefile with Bell Canyon subbasin added
 basins <- st_read("data/Agg_Boundaries_v14.shp", quiet = T)
@@ -477,31 +479,33 @@ ggsave(domain, file= "C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/study_d
 # FFM METRIC alteration maps
 #subbasin polygons
 data$New_Name <- data$subbasin
+
+#replace alteration category names
+data$alteration.status[data$alteration.status == "likely_altered"] <- "Likely Altered"
+data$alteration.status[data$alteration.status == "likely_unaltered"] <- "Likely Unaltered"
+data$alteration.status[data$alteration.status == "indeterminate"] <- "Indeterminate"
+data$alteration.status[data$alteration.status == "not_enough_data"] <- "NA"
+
+#replace alteration direction names
+data$alteration.direction[data$alteration.direction == "none_found"] <- ""
+data$alteration.direction[which(is.na(data$alteration.direction))] <- ""
+data$alteration.direction[data$alteration.direction == "undeterminable"] <- ""
+data$alteration.direction[data$alteration.direction == "low"] <- " Low"
+data$alteration.direction[data$alteration.direction == "early"] <- " Low"
+data$alteration.direction[data$alteration.direction == "late"] <- " High"
+data$alteration.direction[data$alteration.direction == "high"] <- " High"
+#create new alteration category with direction
+data$alteration.status.new <- paste0(data$alteration.status, data$alteration.direction)
+#replace indeterminate high and low
+data$alteration.status.new <- gsub("Indeterminate High", "Indeterminate", data$alteration.status.new)
+data$alteration.status.new <- gsub("Indeterminate Low", "Indeterminate", data$alteration.status.new)
+unique(data$alteration.status.new)
+
+#add to polygon subbasin layer
 basins4 <- basins %>% 
   inner_join(data, by = c('New_Name'))
 basins4
 
-
-#replace alteration category names
-basins4$alteration.status[basins4$alteration.status == "likely_altered"] <- "Likely Altered"
-basins4$alteration.status[basins4$alteration.status == "likely_unaltered"] <- "Likely Unaltered"
-basins4$alteration.status[basins4$alteration.status == "indeterminate"] <- "Indeterminate"
-basins4$alteration.status[basins4$alteration.status == "not_enough_data"] <- "NA"
-
-#replace alteration direction names
-basins4$alteration.direction[basins4$alteration.direction == "none_found"] <- ""
-basins4$alteration.direction[which(is.na(basins4$alteration.direction))] <- ""
-basins4$alteration.direction[basins4$alteration.direction == "undeterminable"] <- ""
-basins4$alteration.direction[basins4$alteration.direction == "low"] <- " Low"
-basins4$alteration.direction[basins4$alteration.direction == "early"] <- " Low"
-basins4$alteration.direction[basins4$alteration.direction == "late"] <- " High"
-basins4$alteration.direction[basins4$alteration.direction == "high"] <- " High"
-#create new alteration category with direction
-basins4$alteration.status.new <- paste0(basins4$alteration.status, basins4$alteration.direction)
-#replace indeterminate high and low
-basins4$alteration.status.new <- gsub("Indeterminate High", "Indeterminate", basins4$alteration.status.new)
-basins4$alteration.status.new <- gsub("Indeterminate Low", "Indeterminate", basins4$alteration.status.new)
-unique(basins4$alteration.status.new)
 
 # #for ref subbasins (upper trabuco (L02-040,  L02-041), replace as NA) 
 # basins4$alteration.status.new[basins4$New_Name == "L02-040"] <- "NA"
@@ -561,11 +565,6 @@ for(j in 1:length(unique.ffm)){
     scale_fill_manual(name = "Alteration Status", labels = lookup.sub$alteration.status.new, values=lookup.sub$colors) +
     geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
   
-  # #add in model source
-  # alt.plot <- alt.plot + geom_sf(data = basins4.sub, size = 1, fill = NA, aes(color=Source)) +
-  #   scale_color_manual(name = "Model Source", labels = c("LSPC", "GSFLOW"), values=c("black", "hotpink")) +
-  #   geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
-  
   #print
  # print(alt.plot)
   
@@ -592,6 +591,23 @@ basins4$title_ffm[basins4$ffm == "Wet_BFL_Mag_50"] <- " Magnitude 50th percentil
 basins4$title_ffm[basins4$ffm == "DS_Mag_50"] <- " Magnitude 50th percentile (cfs)"
 #Wet_BFL_Mag_10
 basins4$title_ffm[basins4$ffm == "DS_Mag_90"] <- " Magnitude 90th percentile (cfs)"
+
+#update values in data as well
+#Wet_BFL_Mag_10
+data$title_ffm[data$ffm == "Wet_BFL_Mag_10"] <- " Magnitude 10th percentile (cfs)"
+#Wet_BFL_Mag_50
+data$title_ffm[data$ffm == "Wet_BFL_Mag_50"] <- " Magnitude 50th percentile (cfs)"
+#Wet_BFL_Mag_10
+data$title_ffm[data$ffm == "DS_Mag_50"] <- " Magnitude 50th percentile (cfs)"
+#Wet_BFL_Mag_10
+data$title_ffm[data$ffm == "DS_Mag_90"] <- " Magnitude 90th percentile (cfs)"
+#add scenario column to basins4 and write.csv to do change plots
+data$scenario <- "Current Conditions"
+
+#write.csv
+filename.data <- paste0(alteration.dir, "ffm_alteration_maps_dataset_compile_current.csv")
+write.csv(data, file=filename.data, row.names=FALSE)
+
 
 for(k in 1:length(uniq.comp)){
   #subset basins4 to ffm j
@@ -657,7 +673,7 @@ for(k in 1:length(uniq.comp)){
 
 #subset component alteration data to wet, dry, peak
 comp.synthesis <- c("Wet-season baseflow", "Peak flow", "Dry-season baseflow")
-component.sub <- c[comp_alt$flow_component %in% comp.synthesis,] %>% 
+component.sub <- comp_alt[comp_alt$flow_component %in% comp.synthesis,] %>% 
   filter(component_alteration == "likely_altered") %>%
   group_by(New_Name) %>% 
   summarise(flow_component = toString(unique(flow_component))) %>% 
@@ -771,5 +787,61 @@ print(syn.plot)
 #save image
 plot.fname <- paste0(dir.alt, "Synthesis_Alteration_Map_wetdrypeak_allsubbasins.jpg")
 ggsave(syn.plot, file=plot.fname, dpi=400, height=6, width=8)
+
+
+###Simplified synthesis plot
+
+#create new simplified category management that is first the same as altered_components
+comp_alt_synth <- comp_alt_synth %>% 
+  mutate(simplied.category = as.character(altered_components))
+
+#update categories
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "Wet-season, Dry-season"] <- "Manage Wet and Dry Season (baseflow)"
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "Wet-season, Peak Flow"] <- "Manage Wet Season (peak and baseflow)"
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "Dry-season"] <- "Manage Dry Season"
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "Wet-season"] <- "Manage Wet Season (peak or baseflow)"
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "Peak Flow"] <- "Manage Wet Season (peak or baseflow)"
+comp_alt_synth$simplied.category[comp_alt_synth$simplied.category == "None"] <- "No Flow Intervention"
+unique(comp_alt_synth$simplied.category)
+
+#save as factor
+comp_alt_synth$simplied.category <- factor(comp_alt_synth$simplied.category, levels = c("All", "Manage Wet and Dry Season (baseflow)", "Manage Wet Season (peak and baseflow)", "Manage Wet Season (peak or baseflow)", "Manage Dry Season", "No Flow Intervention"))
+
+#update colors and levels for each
+colors <- c("#a50f15", "#d95f0e", "#fdae61", "#fff7bc", "#fee090", "pink", "#4575b4")
+levels <- c("All", "Wet-season, Dry-season", "Wet-season, Peak Flow", "Dry-season", "Wet-season", "Peak Flow", "None")
+
+colors <- c("c", "#fc8d59", "#fee090", "#e0f3f8",  "#91bfdb", "#4575b4")
+levels <- c("All", "Manage Wet and Dry Season (baseflow)", "Manage Wet Season (peak and baseflow)", "Manage Wet Season (peak or baseflow)", "Manage Dry Season", "No Flow Intervention")
+
+#base map 
+study3 <- ggplot(basins) + 
+  geom_sf(color = "lightgrey", fill="white") +
+  #geom_sf(color = "#969696", fill="white") +
+  labs(title="", subtitle = "",x ="", y = "")  + 
+  annotation_scale() +
+  annotation_north_arrow(pad_y = unit(0.9, "cm"),  height = unit(.8, "cm"),
+                         width = unit(.8, "cm")) +
+  theme(panel.background = element_rect(fill = "white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_line(color = "white", size = 0.8),
+        plot.title = element_text(size=20),
+        plot.subtitle = element_text(size=12),) 
+
+
+#synthesis map
+syn.plot2 <- study3 + geom_sf(data = comp_alt_synth, color= "gray89", aes(fill=simplied.category, geometry = geometry)) +
+  scale_fill_manual(name = "Management Recommendations", labels = levels, values=colors) +
+  geom_sf(data = reaches, color = "#67a9cf", size = 0.5) 
+
+
+#print
+print(syn.plot2)
+
+#save image
+plot.fname <- paste0(dir.alt, "Synthesis_Alteration_Map_wetdrypeak_allsubbasins_simple.jpg")
+ggsave(syn.plot2, file=plot.fname, dpi=400, height=6, width=8)
+
 
 
