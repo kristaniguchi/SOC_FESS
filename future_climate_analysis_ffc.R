@@ -425,7 +425,7 @@ for(k in 1:length(future.subdir)){
 
 
 ##omit first row of nA values for 
-alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$p10),]
+alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$COMID),]
 percentiles.df.overall <- percentiles.df.overall[2:length(percentiles.df.overall$p10),]
 
 #write csv
@@ -433,3 +433,36 @@ alteration.fname <- paste0(output.dir, "/alteration.FFM.future.climate.all.scena
 write.csv(alteration.df.overall, file=alteration.fname)
 percentiles.fname <- paste0(output.dir, "/percentiles.FFM.future.climate.all.scenarios.csv")
 write.csv(percentiles.df.overall, file=percentiles.fname)
+
+#############################################################################################################################################
+#component alteration summary
+#if one metric is altered, whole component altered
+
+#alteration DF
+unique.sites <- unique(alteration.df.overall$subbasin.model)
+#if first site is NA, remove first row
+if(is.na(unique.sites[1])){
+  alteration.df.overall <- alteration.df.overall[2:length(alteration.df.overall$COMID),]
+}
+#join the alteration df with the ffm table
+ffm.labels$ffm <- as.character(ffm.labels$metric)
+alteration.df.overall$ffm <- as.character(alteration.df.overall$ffm)
+unique.ffm <- unique(ffm.labels$ffm)
+
+alteration.df.overall.join <- full_join(alteration.df.overall, ffm.labels, by="ffm")
+#add column for component.alteration
+alteration.df.overall.join$component_alteration <- alteration.df.overall.join$alteration.status
+alteration.df.overall.join$component_alteration <- gsub("likely_unaltered", NA, alteration.df.overall.join$component_alteration)
+alteration.df.overall.join$component_alteration <- gsub("indeterminate", NA, alteration.df.overall.join$component_alteration)
+
+#write overall alteration FFM
+write.csv(alteration.df.overall.join, file=paste0(output.dir, "/ffm_alteration.df.overall.join.csv"), row.names=FALSE)
+
+
+#synthesis component alteration
+ind.NA <- which(is.na(alteration.df.overall.join$component_alteration))
+component.alteration.subset <- alteration.df.overall.join[-ind.NA,]
+#write component alteration df
+write.csv(component.alteration.subset, file=paste0(output.dir, "/component.alteration.df.overall.join.csv"), row.names=FALSE)
+
+
