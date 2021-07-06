@@ -53,7 +53,7 @@ future.percentiles.fname <- files.all[ind.future.percentiles]
 ind.baseline.percentiles <- grep("historical.percentiles.all", files.all)
 baseline.percentile.fname <- files.all[ind.baseline.percentiles]
 
-#gcn namesCNRM-CM5
+#gcn names CNRM-CM5
 gcm <- c("CanESM2", "CCSM4", "CNRM-CM5", "MIROC5", "Baseline")
 #reach name
 reach <- list.files(future.dir)
