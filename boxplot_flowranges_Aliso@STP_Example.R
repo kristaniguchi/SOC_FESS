@@ -3,39 +3,123 @@
 #load library
 library("ggplot2")
 
-#read in data
-data <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020.csv",stringsAsFactors = FALSE)
+#working directory where data and outputs saved
+out.dir <- "C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/"
+
+#read in the future change df
+future <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_flowalteration_assessment/Future_Climate_Aliso_ALL_lowflowbias/pct.change.percentiles.FFM.future.climate.all.scenarios.Aliso.ALL.lowflowbias.csv")
+#subset to Aliso @ STP
+future <- future %>% 
+  filter(subbasin.model == 201020,
+         metric == "DS_Mag_50" | metric == "Wet_BFL_Mag_10")
+
+#read in data with flow ranges for Aliso @ STP
+#data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020.csv",stringsAsFactors = FALSE)
+#data <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020.csv",stringsAsFactors = FALSE)
+data <- read.csv(paste0(out.dir, "flow_ranges_alisoSTP_07062021.csv"),stringsAsFactors = FALSE)
+
+
 #subset to med probability, cms units
-data <- data[data$Probability_Threshold == "med prob, 75% time ",]
+#find index of High and Low
+ind.high <- grep("High", data$Probability)
+ind.low <- grep("Low", data$Probability)
+#exclude low and high --> only use threshold and medium
+data <- data[-c(ind.high, ind.low),]
+#change lower limit to close to 0 but not quite 0
+
 
 #create boxplot showing different flow ranges
 #unique species
-data$Species <- factor(data$Species, levels = c("Current Flow", "Reference Flow", "Willow - Growth", "Willow - Adult", "Arroyo Toad - Breeding, Eggs", "Arroyo Toad - Tadpole", "Chub - Adult", "ASCI"))
-data$Species_Label <- gsub(" ", "n", data$Species_Label)
-data$Species_Label <- factor(data$Species_Label, levels = c("Current\nFlow", "Reference\nFlow", "Willow\nGrowth", "Willow\nAdult", "Arroyo\nToad\nBreeding,\nEggs", "Arroyo\nToad\nTadpole", "Chub\nAdult", "ASCI"))
+data$Species <- factor(data$Species, levels = c("Current Flow", "Reference Flow", "Willow - Seedling", "Willow - Adult", "Chub - Adult", "Water Conservation"))
+data$Species_Label <- gsub(" ", "\n", data$Species_Label)
+data$Species_Label <- factor(data$Species_Label, levels = c("Current\nFlow", "Reference\nFlow", "Willow\nSeedling", "Willow\nAdult", "Chub\nAdult", "Water\nConservation"))
+#do not plot spring recession
+ind.spring <- grep("Spring", data$Seasonal_Component)
+data <- data[-ind.spring,]
 
 #set colors with willow adult
 Species <- levels(data$Species)
-Colors <- c("white", "black", "#fc8d59", "#d73027", "#91bfdb", "#4575b4", "#fee090", NA)
+Colors <- c("white", "black", "#fc8d59", "#d73027", "#91bfdb", "lightyellow")
 lookup <- data.frame(cbind(as.character(Species), Colors))
 names(lookup) <- c("Species", "Colors")
 
-#set colors with willow adult
-lookup2 <- lookup[-4,]
 
 #All years plots, removed
-P<- ggplot(data, aes(x=Species_Label, ymin = Lower_Limit, lower = Lower_Limit, middle = NA, upper = Upper_Limit, ymax = Upper_Limit, fill=Species)) +
-  geom_boxplot(stat = "identity") +  facet_wrap(~Seasonal.Component, scales="free") +
+P <- ggplot(data, aes(x=Species_Label, ymin = Lower.Limit, lower = Lower.Limit, middle = NA, upper = Upper.Limit, ymax = Upper.Limit, fill=Species)) +
+  geom_boxplot(stat = "identity") +  facet_wrap(~Seasonal_Component, scales="free") +
+  #scale_y_continuous(limits = c(0, 14)) +
   theme(strip.text = element_text(face="bold", size=12),
         strip.background = element_rect(fill="white", colour="black",size=1)) +
-  scale_fill_manual(name = "Species - Life Stage", labels = lookup2$Species, values=lookup2$Colors) + 
+  scale_fill_manual(name = "Species - Life Stage", labels = lookup$Species, values=lookup$Colors) + 
   theme(legend.position="bottom") +
   labs(title="Flow Ranges",x ="", y = "Flow (cms)", subtitle = "Aliso @ STP Example") +
   scale_y_log10()
 
-P
+print(P)
 
-ggsave(P, filename="C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020_dryseasonbaseflow.jpg", dpi=300, height=6, width=8)
+ggsave(P, filename=paste0(out.dir, "boxplot_example_201020_dryseasonbaseflow_wet_watercon.jpg"), dpi=300, height=6, width=10)
+
+
+#add in future percent change --> apply it to current flow
+#use the max change in p90 and the min change in p10
+#filter to the min p10 and max p90 change
+min.max <- future %>% 
+  group_by(metric, percentile) %>% 
+  summarize(min = min(pct.change.value),
+            max = max(pct.change.value)) %>% 
+  ungroup() %>% 
+  filter(percentile == "p10" | percentile == "p90")
+
+#create 2 new rows for future climate
+length.data <- length(data$Node)
+rows <- data.frame(data[(length.data-1):length.data,])
+#change species and life stage labels
+rows[] <- lapply(rows, function(x) gsub("Water Conservation", "Future Climate", x))
+rows[] <- lapply(rows, function(x) gsub("Water\nConservation", "Future\nClimate", x))
+#update DS_Mag_50 lower limit by (min p10 %change * current lower limit) + current lower limit
+ds.lowerlimit <- min.max$min[min.max$metric == "DS_Mag_50" & min.max$percentile == "p10"] * data$Lower.Limit[data$Species1 == "Current Flow" & data$metric == "DS_Mag_50"] + data$Lower.Limit[data$Species1 == "Current Flow" & data$metric == "DS_Mag_50"]
+#update DS_Mag_50 upper limit by (max p10 %change * current upper limit) + current upper limit
+ds.upperlimit <- min.max$max[min.max$metric == "DS_Mag_50" & min.max$percentile == "p90"] * data$Upper.Limit[data$Species1 == "Current Flow" & data$metric == "DS_Mag_50"] + data$Upper.Limit[data$Species1 == "Current Flow" & data$metric == "DS_Mag_50"]
+#update Wet_BFL_Mag_10 lower limit by (min p10 %change * current lower limit) + current lower limit
+ws.lowerlimit <- min.max$min[min.max$metric == "Wet_BFL_Mag_10" & min.max$percentile == "p10"] * data$Lower.Limit[data$Species1 == "Current Flow" & data$metric == "Wet_BFL_Mag_10"] + data$Lower.Limit[data$Species1 == "Current Flow" & data$metric == "Wet_BFL_Mag_10"]
+#update Wet_BFL_Mag_10 upper limit by (max p10 %change * current upper limit) + current upper limit
+ws.upperlimit <- min.max$max[min.max$metric == "Wet_BFL_Mag_10" & min.max$percentile == "p90"] * data$Upper.Limit[data$Species1 == "Current Flow" & data$metric == "Wet_BFL_Mag_10"] + data$Upper.Limit[data$Species1 == "Current Flow" & data$metric == "Wet_BFL_Mag_10"]
+#update the upper and lower limit values in rows
+rows$Lower.Limit <- c(ds.lowerlimit, ws.lowerlimit)
+rows$Upper.Limit <- c(ds.upperlimit, ws.upperlimit)
+#add to data
+#change Node to numeric
+rows$Node <- as.numeric(rows$Node)
+#add to data
+data.future <- data %>% 
+  bind_rows(rows)
+
+#create boxplot showing different flow ranges
+#unique species
+data.future$Species <- factor(data.future$Species, levels = c("Current Flow", "Reference Flow", "Willow - Seedling", "Willow - Adult", "Chub - Adult", "Water Conservation", "Future Climate"))
+unique(data.future$Species_Label)
+data.future$Species_Label <- factor(data.future$Species_Label, levels = c("Current\nFlow", "Reference\nFlow", "Willow\nSeedling", "Willow\nAdult", "Chub\nAdult", "Water\nConservation", "Future\nClimate"))
+
+#set colors with willow adult
+Species <- levels(data.future$Species)
+Colors <- c("white", "black", "#fc8d59", "#d73027", "#91bfdb", "lightyellow", "#fee090")
+lookup <- data.frame(cbind(as.character(Species), Colors))
+names(lookup) <- c("Species", "Colors")
+
+#boxplots with future scenarios
+p2 <- ggplot(data.future, aes(x=Species_Label, ymin = Lower.Limit, lower = Lower.Limit, middle = NA, upper = Upper.Limit, ymax = Upper.Limit, fill=Species)) +
+  geom_boxplot(stat = "identity") +  facet_wrap(~Seasonal_Component, scales="free") +
+  #scale_y_continuous(limits = c(0, 14)) +
+  theme(strip.text = element_text(face="bold", size=12),
+        strip.background = element_rect(fill="white", colour="black",size=1)) +
+  scale_fill_manual(name = "Species - Life Stage", labels = lookup$Species, values=lookup$Colors) + 
+  theme(legend.position="bottom") +
+  labs(title="Flow Ranges",x ="", y = "Flow (cms)", subtitle = "Aliso @ STP Example") +
+  scale_y_log10()
+
+print(p2)
+
+ggsave(p2, filename=paste0(out.dir, "boxplot_example_201020_dryseasonbaseflow_wet_watercon_futureclim.jpg"), dpi=300, height=6, width=10)
 
 
 
