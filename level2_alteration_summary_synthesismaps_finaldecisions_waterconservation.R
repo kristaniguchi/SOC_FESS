@@ -87,7 +87,10 @@ suit_data2 <- suit_data %>%
   select(c(names(suit_data), Subbasin)) %>% 
   rename(New_Name = Subbasin)
 
-
+site <- unique(suit_data2$site)
+New_Name <- unique(suit_data2$New_Name)
+modeled.subbasins <- data.frame(cbind(site, New_Name))
+write.csv(modeled.subbasins, file="L:/San Juan WQIP_KTQ/Data/SpatialData/Agg_Boundaries_v14_modeledsites.csv")
 
 #####post process to get overall alteration
 
