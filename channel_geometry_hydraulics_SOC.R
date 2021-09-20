@@ -1,7 +1,7 @@
 #SOC FESS: Hydraulics Calculations - rating curve development at multiple channel locations
 #Calc av depth, max depth, av. velocity, total. shear (hydradius [R] * slope * density water), total power (shear*av. vel) in LOB, MC, ROB
-####update needed: update the WSE max based on identified station of lowest bank, add in horizontal blue line for max WSE to plot
-####also subset the geom to be summarized up to that lower bank station
+####updated the WSE max based on identified station of lowest bank, add in horizontal blue line for max WSE to plot
+####also subsetted the geom to be summarized up to that lower bank station
 
 #hydraulic variables
 hyd.vars <- c("av.depth.m", "max.depth.m","av.vel.ms","total.shear.Pa", "total.power.watt.ms")
