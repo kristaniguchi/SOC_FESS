@@ -1,11 +1,12 @@
 #Synthesis boxplots for developing flow recommendations - Aliso @ STP example
+#Add in restored channel flow criteria
 
 #load library
 library("ggplot2")
 
 #working directory where data and outputs saved
-#out.dir <- "C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/"
-out.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/"
+out.dir <- "C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/"
+#out.dir <- "C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/"
 
 
 #read in data with flow ranges for Aliso @ STP
@@ -29,15 +30,15 @@ data <- data[-c(ind.high, ind.low, ind.watercon),]
 data$Species <- factor(data$Species, levels = c("Current Flow", "Reference Flow", "Willow - Seedling", "Willow - Adult", "Willow - Adult & Seedling", "Chub - Adult"))
 data$Species_Label <- gsub(" ", "\n", data$Species_Label)
 data$Species_Label <- factor(data$Species_Label, levels = c("Current\nFlow", "Reference\nFlow", "Willow\nSeedling", "Willow\nAdult", "Willow\nAdult\n&\nSeedling", "Chub\nAdult", "Water\nConservation"))
-#do not plot spring recession
-#ind.spring <- grep("Spring", data$Seasonal_Component)
-#data <- data[-ind.spring,]
 
 #set colors with willow adult
 Species <- levels(data$Species)
 Colors <- c("white", "black", "#fc8d59", "#d73027", "lightyellow", "#91bfdb")
 lookup <- data.frame(cbind(as.character(Species), Colors))
 names(lookup) <- c("Species", "Colors")
+
+#set levels for facet flow components
+data$Seasonal_Component <- factor(data$Seasonal_Component, levels = c("Wet-Season Baseflow", "Spring Recession Flow", "Dry-Season Baseflow"))
 
 
 #All years plots, removed
