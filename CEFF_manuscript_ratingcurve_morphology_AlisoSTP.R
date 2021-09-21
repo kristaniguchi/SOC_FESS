@@ -12,22 +12,23 @@ hyd.vars <- c("av.depth.m", "max.depth.m","av.vel.ms","total.shear.Pa", "total.p
 library("tidyverse")
 
 #### load data ####
-#read in channel split info for each XS
-split <- read.csv("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/XS_plots_updated_axis_labels/lookup_reach_manningsn_channeltype_splits_10192020.csv")
+#read in channel split info for each XS - updated for restored aliso XS
+split <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/lookup_reach_manningsn_channeltype_splits_092021_restoredxs.csv")
 #split column indices
 split.col.ind <- grep("split", names(split))
 
 #XS geometry raw data for every XS in OC survey database
 #laptop directory
-data1 <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations.csv")
-data2 <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations2.csv")
-
-data.all <- data.frame(rbind(data1, data2))
+#data1 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations.csv")
+#data2 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations2.csv")
+#data.all <- data.frame(rbind(data1, data2))
 #make sure all distance between pts is 0.1524 (0.5 ft)
+#read in xs geometry for new rating curve
+data.all <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_revised.csv")
 unique(data.all$Distance_M)
 
 ###model reach values (slope, manning's n)
-reach.metrics <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
+reach.metrics <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
   select("Reach.ID", "LSPC.ID", "Slope", "Mannings.n", "Downstream.ID", "Downstream.LSPC.ID")
 reach.metrics2 <- reach.metrics[2:length(reach.metrics$Reach.ID),]
 
@@ -39,7 +40,7 @@ mannings.n <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/X_Secti
 
 
 #read in lookup table with subbasin and X_SECT_ID, filter, and merge with reach metrics by Reach.ID and merge with manning's n at outlet
-lookup <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/nearest_XS_pourpoints_final.csv") %>% 
+lookup <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/nearest_XS_pourpoints_final.csv") %>% 
   rename(Reach.ID = Subbasin) %>% 
   select(X_SECT_ID, Reach.ID) %>% 
   merge(reach.metrics, by = "Reach.ID") %>% 
@@ -49,7 +50,7 @@ lookup <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydr
 
 
 #read in list of subbasins that will be modeled (not all from above will get modeled)
-modeled <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/Subbasins_subset_modeledonly_source.csv") %>% 
+modeled <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Subbasins_subset_modeledonly_source.csv") %>% 
   rename(Reach.ID = New_Name)
 
 #subset lookup to modeled only
@@ -78,12 +79,11 @@ i <- grep("Aliso_1_42", xs.id)
 #output the Max Q in rating curve for each xs
 max.Q.rating <- rep(NA, length(xs.id))
 
-for(i in 1:length(xs.id)){
+for(i in i){
   
   #subset geom data for xs i, calc cumulative distance across (station_m)
   geom.sub <- data.all %>% 
-    filter(X_SECT_ID == xs.id[i]) %>% #filter to xs i 
-    mutate(station_m = cumsum(Distance_M) - 0.1524) #calc distance across, first value should be 0, subtract 0.15 from all
+    filter(X_SECT_ID == xs.id[i]) 
   
   #subbasin name
   subbasin.name <- na.omit(lookup$Reach.ID[lookup$X_SECT_ID == xs.id[i]])
@@ -110,7 +110,7 @@ for(i in 1:length(xs.id)){
     
     for(l in 1:split.num){
       #find index of station closest to split.stations.all
-      ind.station <- which(abs(geom.sub$station_m - split.stations.all[l])==min(abs(geom.sub$station_m - split.stations.all[l])))
+      ind.station <- which(abs(geom.sub$station_m - split.stations.all[l])==min(abs(geom.sub$station_m - split.stations.all[l]), na.rm = TRUE))
       split.stations.actual[l] <- geom.sub$station_m[ind.station] 
     }
     #find all of the breaks to subsection each off of (add the first and last stations to list), will use to subset channel later on
@@ -151,10 +151,10 @@ for(i in 1:length(xs.id)){
   #print plot
   print(xs.prof2)
   #save plots
-  file.name2 <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/XS_plots/XS_plots_updated_axis_labels/", subbasin.name[1], "_",xs.id[i], "_XSplot.jpg")
+  file.name2 <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/", subbasin.name[1], "_",xs.id[i], "_XSrestoredplot.jpg")
   
   #write geometry data to csv
-  write.csv(geom.sub, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_original.csv")
+  #write.csv(geom.sub, file="C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_original.csv")
   
   #if station > 40, width of jpg should be larger, if > 80 width should be larger
   if(max(geom.sub$station_m) > 40 & max(geom.sub$station_m) < 80 ){
@@ -449,7 +449,7 @@ for(i in 1:length(xs.id)){
     max.Q.rating[i] <- max(q.cms, na.rm = TRUE)
     
     #write.csv out.rating.all
-    file.name.outrating <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_data/", subbasin.name[1], "_",xs.id[i], "_ratingcurve.data.csv")
+    file.name.outrating <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/", subbasin.name[1], "_",xs.id[i], "_ratingcurve.data.restoredxs.csv")
     write.csv(out.rating.all, file = file.name.outrating, row.names = FALSE)
     
     #plot Q WSE rating curve
@@ -488,7 +488,7 @@ for(i in 1:length(xs.id)){
       #print(rating2)
       
       #filename
-      file.name.ratingplot <- paste0("L:/San Juan WQIP_KTQ/Data/RawData/From_Geosyntec/South_OC_Flow_Ecology_for_SCCWRP/KTQ_hydraulics/rating_curve_plots/", subbasin.name[1], "_",xs.id[i], "_",rating.name,".jpg")
+      file.name.ratingplot <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/rating_curve_plots/", subbasin.name[1], "_",xs.id[i], "_",rating.name,".jpg")
       
       #save plot
       ggsave(rating2, filename=file.name.ratingplot, dpi=300, height=4, width=8)
