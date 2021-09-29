@@ -13,22 +13,22 @@ library("tidyverse")
 
 #### load data ####
 #read in channel split info for each XS - updated for restored aliso XS
-split <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/lookup_reach_manningsn_channeltype_splits_092021_restoredxs.csv")
+split <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/lookup_reach_manningsn_channeltype_splits_092021_restoredxs.csv")
 #split column indices
 split.col.ind <- grep("split", names(split))
 
 #XS geometry raw data for every XS in OC survey database
 #laptop directory
-#data1 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations.csv")
-#data2 <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations2.csv")
+#data1 <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations.csv")
+#data2 <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/X_Sections_3D_Elevations2.csv")
 #data.all <- data.frame(rbind(data1, data2))
 #make sure all distance between pts is 0.1524 (0.5 ft)
 #read in xs geometry for new rating curve
-data.all <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_revised.csv")
+data.all <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_revised.csv")
 unique(data.all$Distance_M)
 
 ###model reach values (slope, manning's n)
-reach.metrics <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
+reach.metrics <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/Full_Model_Reaches_av_geom_metrics.csv") %>% 
   select("Reach.ID", "LSPC.ID", "Slope", "Mannings.n", "Downstream.ID", "Downstream.LSPC.ID")
 reach.metrics2 <- reach.metrics[2:length(reach.metrics$Reach.ID),]
 
@@ -40,7 +40,7 @@ mannings.n <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Hydraulics/X_Secti
 
 
 #read in lookup table with subbasin and X_SECT_ID, filter, and merge with reach metrics by Reach.ID and merge with manning's n at outlet
-lookup <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/nearest_XS_pourpoints_final.csv") %>% 
+lookup <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/nearest_XS_pourpoints_final.csv") %>% 
   rename(Reach.ID = Subbasin) %>% 
   select(X_SECT_ID, Reach.ID) %>% 
   merge(reach.metrics, by = "Reach.ID") %>% 
@@ -50,7 +50,7 @@ lookup <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/ne
 
 
 #read in list of subbasins that will be modeled (not all from above will get modeled)
-modeled <- read.csv("C:/Users/KristineT/Documents/Git/SOC_FESS/data/hydraulics/Subbasins_subset_modeledonly_source.csv") %>% 
+modeled <- read.csv("C:/Users/KristineT.SCCWRP2K/Documents/Git/SOC_FESS/data/hydraulics/Subbasins_subset_modeledonly_source.csv") %>% 
   rename(Reach.ID = New_Name)
 
 #subset lookup to modeled only
@@ -151,10 +151,10 @@ for(i in i){
   #print plot
   print(xs.prof2)
   #save plots
-  file.name2 <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/", subbasin.name[1], "_",xs.id[i], "_XSrestoredplot.jpg")
+  file.name2 <- paste0("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/", subbasin.name[1], "_",xs.id[i], "_XSrestoredplot.jpg")
   
   #write geometry data to csv
-  #write.csv(geom.sub, file="C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_original.csv")
+  #write.csv(geom.sub, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/aliso_geometry_original.csv")
   
   #if station > 40, width of jpg should be larger, if > 80 width should be larger
   if(max(geom.sub$station_m) > 40 & max(geom.sub$station_m) < 80 ){
@@ -169,6 +169,8 @@ for(i in i){
   #save plot
   ggsave(xs.prof2, filename=file.name2, dpi=300, height=5, width=width.print)
   
+  #TEST check WSE on xsgeom
+  #xs.prof2 + geom_hline(yintercept=8.985354)
   
   #### create rating curves for Q and WSE ####
   #subset reach parameter data (manning's n and slope)
@@ -274,7 +276,7 @@ for(i in i){
       # Find points where x1 is above x2.
       above <- Y1>Y2
       # Points always intersect when above=TRUE, then FALSE or above=FALSE, then TRUE
-      intersect.points<-which(diff(above)!=0)
+      intersect.points <- which(diff(above)!=0)
       # Find the slopes for each line segment.
       Y2.slopes <- (Y2[intersect.points+1]-Y2[intersect.points]) /
         (X[intersect.points+1]-X[intersect.points])
@@ -449,7 +451,7 @@ for(i in i){
     max.Q.rating[i] <- max(q.cms, na.rm = TRUE)
     
     #write.csv out.rating.all
-    file.name.outrating <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/", subbasin.name[1], "_",xs.id[i], "_ratingcurve.data.restoredxs.csv")
+    file.name.outrating <- paste0("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/", subbasin.name[1], "_",xs.id[i], "_ratingcurve.data.restoredxs.csv")
     write.csv(out.rating.all, file = file.name.outrating, row.names = FALSE)
     
     #plot Q WSE rating curve
@@ -488,7 +490,7 @@ for(i in i){
       #print(rating2)
       
       #filename
-      file.name.ratingplot <- paste0("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/rating_curve_plots/", subbasin.name[1], "_",xs.id[i], "_",rating.name,".jpg")
+      file.name.ratingplot <- paste0("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/data/hydraulics/rating_curve_plots/", subbasin.name[1], "_",xs.id[i], "_",rating.name,".jpg")
       
       #save plot
       ggsave(rating2, filename=file.name.ratingplot, dpi=300, height=4, width=8)
