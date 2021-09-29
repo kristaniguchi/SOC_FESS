@@ -12,12 +12,13 @@ out.dir <- "C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - G
 #read in data with flow ranges for Aliso @ STP
 #data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020.csv",stringsAsFactors = FALSE)
 #data <- read.csv("C:/Users/KristineT/SCCWRP/SOC WQIP - Flow Ecology Study - General/Synthesis/boxplot_example_201020.csv",stringsAsFactors = FALSE)
-data <- read.csv(paste0(out.dir, "flow_ranges_alisoSTP_09032021.csv"),stringsAsFactors = FALSE)
+#data <- read.csv(paste0(out.dir, "flow_ranges_alisoSTP_09032021.csv"),stringsAsFactors = FALSE)
+data <- read.csv(paste0(out.dir, "flow_ranges_alisoSTP_09212021.csv"),stringsAsFactors = FALSE)
 
 
 #subset to med probability, cms units
 #find index of High and Low
-ind.high <- grep("Med", data$Probability)
+ind.high <- grep("High", data$Probability)
 ind.low <- grep("Low", data$Probability)
 ind.watercon <- grep("Water Conservation", data$Species)
 #exclude low and high --> only use threshold and medium
@@ -49,12 +50,73 @@ P <- ggplot(data, aes(x=Species_Label, ymin = lowerlimit_cfs, lower = lowerlimit
         strip.background = element_rect(fill="white", colour="black",size=1)) +
   scale_fill_manual(name = "Flow Ranges", labels = lookup$Species, values=lookup$Colors) + 
   theme(legend.position="bottom") +
-  labs(title="Flow Ranges",x ="", y = "Flow (cfs)", subtitle = "Lower Aliso Creek") +
+  labs(title="Flow Ranges",x ="", y = "Flow (cfs)", subtitle = "Lower Aliso Creek - Current Morphology") +
   scale_y_log10()
 
 print(P)
 
+#save in synthesis folder
 ggsave(P, filename=paste0(out.dir, "boxplot_example_201020_dry_spring_wet_CEFFManuscript.jpg"), dpi=300, height=6, width=10)
+
+#save in figures folder
+ggsave(P, filename=paste0("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/figures/", "boxplot_example_201020_dry_spring_wet_CEFFManuscript.jpg"), dpi=300, height=6, width=10)
+
+
+########Boxplots with future channel morphology
+
+#read in data.restored with flow ranges for Aliso @ STP including restored XS flow ranges
+data.restored <- read.csv(paste0(out.dir, "flow_ranges_alisoSTP_09212021_restoredXSgeom.csv"),stringsAsFactors = FALSE)
+
+#subset to med probability, cms units
+#find index of High and Low
+ind.high <- grep("High", data.restored$Probability)
+ind.low <- grep("Low", data.restored$Probability)
+ind.watercon <- grep("Water Conservation", data.restored$Species)
+#exclude low and high --> only use threshold and medium
+data.restored <- data.restored[-c(ind.high, ind.low, ind.watercon),]
+#change lower limit to close to 0 but not quite 0
+
+
+#create boxplot showing different flow ranges
+#unique species
+data.restored$Species <- factor(data.restored$Species, levels = c("Current Flow", "Reference Flow", "Willow - Seedling", "Willow - Adult", "Willow - Adult & Seedling", "Chub - Adult"))
+data.restored$Species_Label2 <- gsub(" ", "\n", data.restored$Species_Label2)
+data.restored$Species_Label2 <- factor(data.restored$Species_Label2, levels = c("Current\nFlow", "Reference\nFlow", "Willow\nSeedling\n(Existing\nChannel)", "Willow\nSeedling\n(Alternative\nChannel)", "Willow\nAdult\n(Existing\nChannel)", "Willow\nAdult\n(Alternative\nChannel)", "Willow\nAdult\n&\nSeedling\n(Existing\nChannel)", "Willow\nAdult\n&\nSeedling\n(Alternative\nChannel)", "Chub\nAdult\n(Existing\nChannel)", "Chub\nAdult\n(Alternative\nChannel)"))
+
+#set colors with willow adult
+Species <- levels(data.restored$Species)
+Colors <- c("white", "black", "#fc8d59", "#d73027", "lightyellow", "#91bfdb")
+lookup <- data.frame(cbind(as.character(Species), Colors))
+names(lookup) <- c("Species", "Colors")
+
+#set levels for facet flow components
+data.restored$Seasonal_Component <- factor(data.restored$Seasonal_Component, levels = c("Wet-Season Baseflow", "Spring Recession Flow", "Dry-Season Baseflow"))
+
+
+#All years plots, removed
+P.all <- ggplot(data.restored, aes(x=Species_Label2, ymin = lowerlimit_cfs, lower = lowerlimit_cfs, middle = NA, upper = upperlimit_cfs, ymax = upperlimit_cfs, fill=Species)) +
+  geom_boxplot(stat = "identity") +  
+  facet_wrap(~Seasonal_Component, scales="free", nrow = 2) +
+  #facet_grid(rows=vars(Seasonal_Component)) +
+  #scale_y_continuous(limits = c(0, 14)) +
+  theme(strip.text = element_text(face="bold", size=12),
+        strip.background = element_rect(fill="white", colour="black",size=1)) +
+  scale_fill_manual(name = "Flow Ranges", labels = lookup$Species, values=lookup$Colors) + 
+  theme(legend.position="bottom") +
+  labs(title="Flow Ranges",x ="", y = "Flow (cfs)", subtitle = "Lower Aliso Creek - Existing and Alternative Morphology") +
+  scale_y_log10()
+
+print(P.all)
+
+#save in synthesis folder
+ggsave(P.all, filename=paste0(out.dir, "boxplot_example_201020_dry_spring_wet_CEFFManuscript_restored.jpg"), dpi=300, height=10, width=12)
+
+#save in figures folder
+ggsave(P.all, filename=paste0("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Manuscripts/CEFF_casestudy/figures/", "boxplot_example_201020_dry_spring_wet_CEFFManuscript_restored.jpg"), dpi=300, height=10, width=12)
+
+###################
+
+
 
 
 #add in future percent change --> apply it to current flow
