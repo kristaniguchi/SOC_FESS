@@ -245,3 +245,7 @@ print(syn.plot)
 out.filename <- paste0(out.dir, "ASCI_predicted_Recommendations.jpg")
 ggsave(syn.plot, file = out.filename, dpi=500, height=6, width=8)
 
+#summary of subbasins in each category
+length(subset.join$New_Name)
+length(unique(subset.join$New_Name))
+
