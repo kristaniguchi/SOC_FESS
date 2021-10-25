@@ -19,74 +19,80 @@ library(spDataLarge)
 library(geosphere)
 library(rgeos)
 
+######################################################################################################
+# #Only run these chunk when you have not already developed the management recommendations
+# #Otherwise, skip this section 
 
-#read csvs with observed and predicted CSCI/ASCI
-observed.data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Observed Bioassessment Scores/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary_Observed.csv")
-predicted.data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Predicted Bioassessment Scores/CSCI_ASCI_hydro_alteration_predicted.csv")
-
-#add in the missing subbasins from predicted.data
-#read in subbasin COMID lookup table
-comid.lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/SOC_FESS_Subbasin_NHD.COMID_Lookup_Table.csv")
-#read in modeled subbasins
-modeled.subbasins <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Agg_Boundaries_v14_modeledsites.csv")
-#filter comid lookup with modeled.subbasins
-comid.lookup2 <- comid.lookup[which(comid.lookup$Subbasin %in% modeled.subbasins$New_Name),]
-length(comid.lookup2$Subbasin)
-length(modeled.subbasins$New_Name)
-#find which subbasins are missing from predicted.data
-`%notin%` <- Negate(`%in%`)
-comid.missing <- comid.lookup2[which(comid.lookup2$Subbasin %notin% predicted.data$New_Name),]
-#find the ASCI and CSCI predicted for missing comids
-#read in predicted CSCI and ASCI
-pred.csci.asci <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/CSCI_ASCI_Scores_COMID_full_rf_results_Heili.csv")
-comid.missing.csci.asci <- comid.missing %>% 
-  left_join(pred.csci.asci, by=c("COMID_forcalc" = "COMID"))
-#add in dummy columns for bio condition 
-comid.missing.csci.asci$New_Name <- comid.missing.csci.asci$Subbasin
-
-comid.missing.csci.asci$Biological.Condition.CSCI.Predicted <- NA
-comid.missing.csci.asci$Hydro.Alteration.CSCI <- NA
-comid.missing.csci.asci$Stream.Characterization.CSCI <- NA
-comid.missing.csci.asci$Biological.Condition.ASCI.Predicted <- NA
-comid.missing.csci.asci$Hydro.Alteration.ASCI <- NA
-comid.missing.csci.asci$Stream.Characterization.ASCI <- NA
-comid.missing.csci.asci$Synthesis.Alteration <- NA
-comid.missing.csci.asci$StationCode <- NA
-comid.missing.csci.asci$Latitude <- NA
-comid.missing.csci.asci$Longitude <- NA
-#rename columns to be same with predicted data
-names(comid.missing.csci.asci)[6:8] <- c("New_Name", "COMID_old", "COMID")
-names(comid.missing.csci.asci)[11:13] <- c("new_subbasinname", "ASCI.Predicted", "CSCI.Predicted")
-
-#join comid.missing.csci.asci with predicted.data
-predicted.data.join1 <- predicted.data %>% 
-  bind_rows(comid.missing.csci.asci)
-
-#########
-#read in bio-relevant flow alteration for CSCI and ASCI
-bio.flow.alt <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/Suitability_Maps/prob25CSCI.75ASCI_75time_current/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary.csv")
-
-#add in bio-relevant flow alteration CSCI and ASCI into observed and predicted df
-observed.data.join <- observed.data %>% 
-  left_join(bio.flow.alt, by = c("Subbasin" =  "New_Name"))
-#add in bio relevant alteration into blank columns for CSCI and ASCI
-observed.data$Hydro.Alteration.CSCI <- observed.data.join$hydro.alteration.CSCI
-observed.data$Hydro.Alteration.ASCI <- observed.data.join$hydro.alteration.ASCI
-#write csv and do categories in excel
-write.csv(observed.data, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Observed Bioassessment Scores/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary_Observed.csv", row.names=FALSE)
-
-predicted.data.join <- predicted.data.join1 %>% 
-  left_join(bio.flow.alt, by = c("New_Name"))
-#add in bio relevant alteration into blank columns for CSCI and ASCI
-#predicted.data$Hydro.Alteration.CSCI <- predicted.data.join$hydro.alteration.CSCI
-#predicted.data$Hydro.Alteration.ASCI <- predicted.data.join$hydro.alteration.ASCI
-#write csv and do categories in excel
-write.csv(predicted.data.join, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Predicted Bioassessment Scores/CSCI_ASCI_hydro_alteration_predicted2.csv", row.names=FALSE)
+# #read csvs with observed and predicted CSCI/ASCI
+# observed.data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Observed Bioassessment Scores/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary_Observed.csv")
+# predicted.data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Predicted Bioassessment Scores/CSCI_ASCI_hydro_alteration_predicted2.csv")
+# 
+# #add in the missing subbasins from predicted.data
+# #read in subbasin COMID lookup table
+# comid.lookup <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/SOC_FESS_Subbasin_NHD.COMID_Lookup_Table.csv")
+# #read in modeled subbasins
+# modeled.subbasins <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/Agg_Boundaries_v14_modeledsites.csv")
+# #filter comid lookup with modeled.subbasins
+# comid.lookup2 <- comid.lookup[which(comid.lookup$Subbasin %in% modeled.subbasins$New_Name),]
+# length(comid.lookup2$Subbasin)
+# length(modeled.subbasins$New_Name)
+# #find which subbasins are missing from predicted.data
+# `%notin%` <- Negate(`%in%`)
+# comid.missing <- comid.lookup2[which(comid.lookup2$Subbasin %notin% predicted.data$New_Name),]
+# #find the ASCI and CSCI predicted for missing comids
+# #read in predicted CSCI and ASCI
+# pred.csci.asci <- read.csv("L:/San Juan WQIP_KTQ/Data/SpatialData/CSCI_ASCI_Scores_COMID_full_rf_results_Heili.csv")
+# comid.missing.csci.asci <- comid.missing %>% 
+#   left_join(pred.csci.asci, by=c("COMID_forcalc" = "COMID"))
+# #add in dummy columns for bio condition 
+# comid.missing.csci.asci$New_Name <- comid.missing.csci.asci$Subbasin
+# 
+# comid.missing.csci.asci$Biological.Condition.CSCI.Predicted <- NA
+# comid.missing.csci.asci$Hydro.Alteration.CSCI <- NA
+# comid.missing.csci.asci$Stream.Characterization.CSCI <- NA
+# comid.missing.csci.asci$Biological.Condition.ASCI.Predicted <- NA
+# comid.missing.csci.asci$Hydro.Alteration.ASCI <- NA
+# comid.missing.csci.asci$Stream.Characterization.ASCI <- NA
+# comid.missing.csci.asci$Synthesis.Alteration <- NA
+# comid.missing.csci.asci$StationCode <- NA
+# comid.missing.csci.asci$Latitude <- NA
+# comid.missing.csci.asci$Longitude <- NA
+# #rename columns to be same with predicted data
+# names(comid.missing.csci.asci)[6:8] <- c("New_Name", "COMID_old", "COMID")
+# names(comid.missing.csci.asci)[11:13] <- c("new_subbasinname", "ASCI.Predicted", "CSCI.Predicted")
+# 
+# #join comid.missing.csci.asci with predicted.data
+# predicted.data.join1 <- predicted.data %>% 
+#   bind_rows(comid.missing.csci.asci)
+# 
+# #########
+# #read in bio-relevant flow alteration for CSCI and ASCI
+# bio.flow.alt <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Tier2_analysis/Suitability_Maps/prob25CSCI.75ASCI_75time_current/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary.csv")
+# 
+# #add in bio-relevant flow alteration CSCI and ASCI into observed and predicted df
+# observed.data.join <- observed.data %>% 
+#   left_join(bio.flow.alt, by = c("Subbasin" =  "New_Name"))
+# #add in bio relevant alteration into blank columns for CSCI and ASCI
+# observed.data$Hydro.Alteration.CSCI <- observed.data.join$hydro.alteration.CSCI
+# observed.data$Hydro.Alteration.ASCI <- observed.data.join$hydro.alteration.ASCI
+# #write csv and do categories in excel
+# write.csv(observed.data, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Observed Bioassessment Scores/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary_Observed.csv", row.names=FALSE)
+# 
+# predicted.data.join <- predicted.data.join1 %>% 
+#   left_join(bio.flow.alt, by = c("New_Name"))
+# #add in bio relevant alteration into blank columns for CSCI and ASCI
+# #predicted.data$Hydro.Alteration.CSCI <- predicted.data.join$hydro.alteration.CSCI
+# #predicted.data$Hydro.Alteration.ASCI <- predicted.data.join$hydro.alteration.ASCI
+# #write csv and do categories in excel
+# write.csv(predicted.data.join, file="C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Predicted Bioassessment Scores/CSCI_ASCI_hydro_alteration_predicted2.csv", row.names=FALSE)
 
 #Stream characterization CSCI and ASCI rules, done outside of R:
   #1. if bio possibly, likely, or very likely altered and hydro alt is likely altered, then Prioritized for Flow Management
   #2. if bio possibly, likely, or very likely altered and hydro alt is likely unaltered, then Prioritized for Separate Stressor Evaluations
   #3. if bio likely intact and hydro unaltered, then prioritized for protection
+######################################################################################################
+
+
 
 #read in updated obs, predicted csvs
 observed.data <- read.csv("C:/Users/KristineT.SCCWRP2K/SCCWRP/SOC WQIP - Flow Ecology Study - General/Data_Products/FY2020_2021/Flow Ecology Level 2/Management Recommendations/Observed Bioassessment Scores/SOC_CSCI_ASCI_HydroAlt_Synthesis_Summary_Observed.csv")
@@ -113,8 +119,8 @@ basins <- st_read("data/Agg_Boundaries_v14.shp", quiet = T)
 reaches <- st_read('data/reaches_forSCCWRP.shp', quiet = T)
 
 #colors for suitability categories
-colors <- c("#ca0020", "#fdae61","#0571b0", "white")
-priority <- c("Prioritized for Flow Management",  "Prioritized for Separate Stressor Evaluation","Prioritized for Protection", NA)
+colors <- c("#ca0020", "#fdae61", "#ffffbf", "#0571b0", "white")
+priority <- c("Prioritized for Flow Management",  "Prioritized for Separate Stressor Evaluation", "Prioritized for Monitoring", "Prioritized for Protection", NA)
 lookup <- data.frame(cbind(colors, priority))
 
 
