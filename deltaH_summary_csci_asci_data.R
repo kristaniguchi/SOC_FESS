@@ -9,8 +9,9 @@
   #deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH/deltaH_badyrs_updated.csv")  
   #changed all zero flow days to very low value 0.00001, ID all bad years (no wet season timing), replaced with NA and ran ffc
   #OLD: deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/FFMs_deltaH_all_badyrs_nonzero_class.csv")
-  deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_updated/deltaH_badyrs_nonzero_updated.csv")
-
+  # deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMS_deltaH_updated/deltaH_badyrs_nonzero_updated.csv")
+  # re-ran nonzero/badyears analysis due to updated with the FFC
+  deltaH <- read.csv("L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH_updated/badyears_nonzero/deltaH_badyrs_nonzero_updated.csv")
 
   #round deltaH to 0.01
 deltaH$deltaH <- round(deltaH$deltaH, digits = 4)
@@ -33,7 +34,10 @@ sites.deltaH <- unique(deltaH$site)
 #output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs/deltaH_summary_all_badyrs.csv"
 #no zero flow days, changed to low value and bad years replace with NA
 #OLD: output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH/FFMs_deltaH_badyrs_nonzero/deltaH_summary_all_badyrs_nonzero.csv"
-output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH_updated/deltaH_summary_badyrs_nonzero_updated.csv"
+# OLD: output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH_updated/deltaH_summary_badyrs_nonzero_updated.csv"
+
+# re-running summary one data from updated FFC
+output.filename <- "L:/San Juan WQIP_KTQ/Data/Working/Regional_Curves_CSCI_ASCI_Annie/Data/Flow/subset_woutLARsitematches/DeltaH_FINAL/deltaH_summary_badyrs_nonzero.csv"
 
 #############################################################
 
